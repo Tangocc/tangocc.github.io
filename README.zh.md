@@ -1,4 +1,4 @@
-# Hux blog 模板
+# Tango blog 
 
 ### [我的博客在这里 &rarr;](http://tangocc.github.io)
 
