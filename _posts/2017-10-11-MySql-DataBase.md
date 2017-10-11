@@ -5,10 +5,13 @@ subtitle:   ""
 date:       2017-10-11 12:00:00
 author:     "Tango"
 header-img: "img/in-post/post-2017-10-11/post-bg-universe.jpg"
+catalog: true
+tags:   
+    - MySql数据库 
 ---
 
 
->爽。
+>
 >真正的高手从来不是临场发挥，随机应变是外人看来的错觉。
 >
 
@@ -135,7 +138,7 @@ pthread_handler_t handle_connections_sockets(void *arg __attribute__((unused))) 
 
 ```
 
-### 3. 创建连接 sql/mysqld.cc - create_new_thread/create_thread_to_handle_connection
+### 3. 创建连接 sql/mysqld.cc  create_new_thread/create_thread_to_handle_connection:
 
 ```
 static void create_new_thread(THD *thd) {
@@ -214,10 +217,9 @@ bool dispatch_command(enum enum_server_command command, THD *thd, char* packet, 
 ```
 
 
-### 8
+### 8.sql/sql_parse.cc mysql_parse函数负责解析SQL
 
 ```
-mysql_parse函数负责解析SQL(sql/sql_parse.cc),精简代码如下:
 void mysql_parse(THD *thd, const char *inBuf, uint length, const char ** found_semicolon) {
     lex_start(thd); //初始化线程解析描述符
     if (query_cache_send_result_to_client(thd, (char*) inBuf, length) <= 0) { // 看query cache中有否命中，有就直接返回结果，否则进行查找
@@ -229,10 +231,9 @@ void mysql_parse(THD *thd, const char *inBuf, uint length, const char ** found_s
 
 ```
 
-### 9
+### 9.执行命令 mysql_execute_command
 
 ```
-终于开始执行鸟~mysql_execute_command接近3k行......,非常精简代码如下:
 int mysql_execute_command(THD *thd) {
     LEX  *lex= thd->lex;  // 解析过后的SQL语句的语法结构
     TABLE_LIST *all_tables = lex->query_tables;   // 该语句要访问的表的列表
@@ -250,9 +251,8 @@ int mysql_execute_command(THD *thd) {
 }
 
 ```
-### 10
+### 10.接下来sql/sql_insert.cc中mysql_insert函数
 ```
-我们看一个例子, mysql_insert (在sql/sql_insert.cc),精简代码如下:
 bool mysql_insert(THD *thd,
                    TABLE_LIST *table_list,      // 该INSERT要用到的表
                    List<Item> &fields,             // 使用的项
@@ -262,12 +262,11 @@ bool mysql_insert(THD *thd,
     foreach value in values_list {
         write_record(...);
     }
-} //里面还有
+} //里面还有trigger，错误，view之类的杂七杂八的东西，我们都忽略
 ```
 
-### 11
+### 11.接着看真正写数据的函数write_record (在sql/sql_insert.cc),精简代码如下:
 ```
-我们接着看真正写数据的函数write_record (在sql/sql_insert.cc),精简代码如下:
 int write_record(THD *thd, TABLE *table,COPY_INFO *info) {  // 写数据记录
     if (info->handle_duplicates == DUP_REPLACE || info->handle_duplicates == DUP_UPDATE) { //如果是REPLACE或UPDATE则替换数据
         table->file->ha_write_row(table->record[0]);
