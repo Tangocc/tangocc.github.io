@@ -1,10 +1,10 @@
 ---
 layout:     post
 title:      "MySql源码浅析"
-subtitle:   "让sql飞一会"
+subtitle:   ""
 date:       2017-10-11 12:00:00
 author:     "Tango"
-header-img: ""
+header-img: "img/in-post/post-2017-10-11/post-bg-universe.jpg"
 ---
 
 
@@ -15,7 +15,7 @@ header-img: ""
 
 ## 数据库架构
 
-[](/img/in-post/post-2017-10-11/post-mysql-structs.png)
+![](/img/in-post/post-2017-10-11/post-mysql-structs.png)
 
 ## MySQL目录结构
 
@@ -99,7 +99,7 @@ header-img: ""
 ## MySQL源码
 
 
-### 1. 主函数sql/mysqld.cc中，精简后的代码如下：
+### 1. 主函数sql/mysqld.cc中，代码如下：
 ```
 int main(int argc, char **argv) //标准入口函数
 {
@@ -117,7 +117,7 @@ int main(int argc, char **argv) //标准入口函数
     handle_connections_sockets();//主要处理函数，处理新的连接并创建新的线程处理
 }
 ```
-### 2.监听连接: sql/mysqld.cc中(handle_connections_sockets)
+### 2.监听连接: sql/mysqld.cc - handle_connections_sockets:
 
 ```
 pthread_handler_t handle_connections_sockets(void *arg __attribute__((unused))) {
@@ -135,7 +135,7 @@ pthread_handler_t handle_connections_sockets(void *arg __attribute__((unused))) 
 
 ```
 
-### 3. 创建连接 sql/mysqld.cc中(create_new_thread/create_thread_to_handle_connection)
+### 3. 创建连接 sql/mysqld.cc - create_new_thread/create_thread_to_handle_connection
 
 ```
 static void create_new_thread(THD *thd) {
@@ -150,10 +150,9 @@ static void create_new_thread(THD *thd) {
 
 ```
 
-### 4. 线程调度器
+### 4. 线程调度器thread_scheduler - create_thread_to_handle_connection
 
 ```
-而thread_scheduler转而调用create_thread_to_handle_connection,精简后的代码如下：
 void create_thread_to_handle_connection(THD *thd) {
     if (cached_thread_count > wake_thread) { //看当前工作线程缓存(thread_cache)中有否空余的线程
       thread_cache.append(thd);
@@ -166,9 +165,8 @@ void create_thread_to_handle_connection(THD *thd) {
 
 ```
 
-### 5.
+### 5.handle_one_connection
 ```
-创建连接使用handle_one_connection函数,精简代码如下:
 pthread_handler_t handle_one_connection(void *arg) {
     thread_scheduler.init_new_connection_thread(); // 初始化线程预处理操作
     setup_connection_thread_globals(thd); //载入一些Session级变量
@@ -183,10 +181,9 @@ pthread_handler_t handle_one_connection(void *arg) {
 
 ```
 
-### 6.执行语句
+### 6.执行语句 sql/sql_parse.cc - do_command函数
 
 ```
-do_command函数在sql/sql_parse.cc定义,代码如下:
 bool do_command(THD *thd) {
     NET *net= &thd->net;
     packet_length = my_net_read(net);
@@ -197,10 +194,9 @@ bool do_command(THD *thd) {
 
 ```
 
-###  7.指令分发
+###  7.指令分发 sql/sql_parse.cc定义dispatch_command
 
 ```
-再看dispatch_command函数在sql/sql_parse.cc定义,精简代码如下:
 bool dispatch_command(enum enum_server_command command, THD *thd, char* packet, uint packet_length) {
     NET *net = &thd->net;
     thd->command = command; 
@@ -216,3 +212,75 @@ bool dispatch_command(enum enum_server_command command, THD *thd, char* packet, 
 }
 
 ```
+
+
+### 8
+
+```
+mysql_parse函数负责解析SQL(sql/sql_parse.cc),精简代码如下:
+void mysql_parse(THD *thd, const char *inBuf, uint length, const char ** found_semicolon) {
+    lex_start(thd); //初始化线程解析描述符
+    if (query_cache_send_result_to_client(thd, (char*) inBuf, length) <= 0) { // 看query cache中有否命中，有就直接返回结果，否则进行查找
+        Parser_state parser_state(thd, inBuf, length);   
+        parse_sql(thd, & parser_state, NULL); // 解析SQL语句
+        mysql_execute_command(thd); // 执行
+    }
+}
+
+```
+
+### 9
+
+```
+终于开始执行鸟~mysql_execute_command接近3k行......,非常精简代码如下:
+int mysql_execute_command(THD *thd) {
+    LEX  *lex= thd->lex;  // 解析过后的SQL语句的语法结构
+    TABLE_LIST *all_tables = lex->query_tables;   // 该语句要访问的表的列表
+    switch (lex->sql_command) {
+        ...
+        case SQLCOM_INSERT:
+            insert_precheck(thd, all_tables);
+            mysql_insert(thd, all_tables, lex->field_list, lex->many_values, lex->update_list, lex->value_list, lex->duplicates, lex->ignore);
+            break; ... 
+        case SQLCOM_SELECT:
+            check_table_access(thd, lex->exchange ? SELECT_ACL | FILE_ACL :  SELECT_ACL,  all_tables, UINT_MAX, FALSE);    // 检查用户对数据表的访问权限
+            execute_sqlcom_select(thd, all_tables);     // 执行select语句
+            break;
+    }
+}
+
+```
+### 10
+```
+我们看一个例子, mysql_insert (在sql/sql_insert.cc),精简代码如下:
+bool mysql_insert(THD *thd,
+                   TABLE_LIST *table_list,      // 该INSERT要用到的表
+                   List<Item> &fields,             // 使用的项
+                   ....) {
+    open_and_lock_tables(thd, table_list); // 这里的锁只是防止表结构修改
+    mysql_prepare_insert(...);
+    foreach value in values_list {
+        write_record(...);
+    }
+} //里面还有
+```
+
+### 11
+```
+我们接着看真正写数据的函数write_record (在sql/sql_insert.cc),精简代码如下:
+int write_record(THD *thd, TABLE *table,COPY_INFO *info) {  // 写数据记录
+    if (info->handle_duplicates == DUP_REPLACE || info->handle_duplicates == DUP_UPDATE) { //如果是REPLACE或UPDATE则替换数据
+        table->file->ha_write_row(table->record[0]);
+        table->file->ha_update_row(table->record[1], table->record[0]));
+    } else {
+        table->file->ha_write_row(table->record[0]);
+    }
+}
+
+int handler::ha_write_row(uchar *buf) { //这是啥? Handler API !
+    write_row(buf);   // 调用具体的实现
+    binlog_log_row(table, 0, buf, log_func));  // 写binlog
+}
+
+```
+
