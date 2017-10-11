@@ -1,3 +1,13 @@
+---
+layout:     post
+title:      "MySql源码浅析"
+subtitle:   "让sql飞一会"
+date:       2017-10-11 12:00:00
+author:     "Tango"
+header-img: ""
+---
+
+
 >爽。
 >真正的高手从来不是临场发挥，随机应变是外人看来的错觉。
 >
