@@ -21,7 +21,7 @@ tags:
 ### 数据库架构
 
 
-![](/img/in-post/post-2017-10-11/post-mysql-structs.png)
+![](/img/in-post/post-2017-10-11/post-mysql-structs.jpg)
 
 
  1. Connection Pool
