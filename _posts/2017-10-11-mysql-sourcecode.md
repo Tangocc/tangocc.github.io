@@ -1,6 +1,6 @@
 ---
 layout:     post
-title:      "MySql源码浅析"
+title:      "MySql系列之源码浅析"
 subtitle:   ""
 date:       2017-10-11 12:00:00
 author:     "Tango"
@@ -11,12 +11,9 @@ tags:
 ---
 
 
->
+>源码才是王道。
 >真正的高手从来不是临场发挥，随机应变是外人看来的错觉。
 >
-
-
-## MySQL源码
 
 
 ### 1. 主函数sql/mysqld.cc中，代码如下：
@@ -200,3 +197,6 @@ int handler::ha_write_row(uchar *buf) { //这是啥? Handler API !
 
 ```
 
+---
+### 请求数据流
+![](img/in-post/post-2017-10-11/post-mysql-data-stream.jpg)
