@@ -21,7 +21,7 @@ tags:
 ### 数据库架构
 
 <center>
-![架构](/img/in-post/post-2017-10-11/post-mysql-structs.png)
+![](/img/in-post/post-2017-10-11/post-mysql-structs.png)
 </center>
 
  1. Connection Pool
@@ -125,16 +125,20 @@ tags:
 ### 客户端与服务端交互
 
 <center>
-![交互](/img/in-post/post-2017-10-11/post-mysql-client-server.png)
-</center>
+	![](/img/in-post/post-2017-10-11/post-mysql-client-server.png)
+</center>>
+
+
 
  - **客户端**
  　各种语言层面**jdbc**驱动可以理解为客户端，客户端通过连接池与服务器进行交互。  
  - **服务端**
 　服务端采用**select/poll IO**多路复用机制实现客户端的连接，后端采用**线程池处理与客户端的连接**；当接收到客户端连接，服务器首先会查询是否有空闲线程，如果有则获得线程处理与客户端的交互，否则验证当前线程数是否大于max\_connections，如果小于**max_connections**，则创建线程，否则丢弃连接。  
-　
-**注： max_connections是不是越大越好？受哪些因素的影响？**
+
+---
+**注： max_connections是不是越大越好？受哪些因素的影响？**  
+
 > 1.系统层面文件描述符的个数：系统默认可以打开最大文件描述符数为 65535；
 > 2.select模型：select底层采用数组方式监听socket，默认监听数目为1024，可以通过配置文件修改个数，最大不超过65535，且随着数目增加，服务端性能变差。
->3.服务端CPU及内存等硬件情况：服务端采用线程池处理与客户端的连接，线程池中数目大小受限于内存。
+> 3.服务端CPU及内存等硬件情况：服务端采用线程池处理与客户端的连接，线程池中数目大小受限于内存。
 
