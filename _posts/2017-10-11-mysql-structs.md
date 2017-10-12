@@ -1,6 +1,6 @@
 ---
 layout:     post
-title:      "MySql源码浅析"
+title:      "MySql系列之架构浅析"
 subtitle:   ""
 date:       2017-10-11 12:00:00
 author:     "Tango"
@@ -9,7 +9,6 @@ catalog: true
 tags:   
     - MySql数据库 
 ---
-[TOC]
 
 
 >   真正的高手从来不是临场发挥，随机应变是外人看来的错觉。
@@ -20,10 +19,10 @@ tags:
 
 ---
 ### 数据库架构
+
 <center>
-
 ![架构](/img/in-post/post-2017-10-11/post-mysql-structs.png)
-
+</center>
 
  1. Connection Pool
 >最上层是一些客户端和连接服务，包含本地sock通信和大多数基于客户端/服务端工具实现的类似于tcp/ip的通信。主要完成一些类似于连接处理、授权认证、及相关的安全方案。在该层上引入了线程池的概念，为通过认证安全接入的客户端提供线程。同样在该层上可以实现基于SSL的安全链接。服务器也会为安全接入的每个客户端验证它所具有的操作权限。 
@@ -41,8 +40,6 @@ tags:
 >数据存储层，主要是将数据存储在运行于裸设备的文件系统之上，并完成与存储引擎的交互。
 >
  
-
-
 ---
 ### MySQL目录结构
 ```
@@ -126,10 +123,9 @@ tags:
 
 ---
 ### 客户端与服务端交互
+
 <center>
-
 ![交互](/img/in-post/post-2017-10-11/post-mysql-client-server.png)
-
 </center>
 
  - **客户端**
