@@ -15,8 +15,10 @@ tags:
 >真正的高手从来不是临场发挥，随机应变是外人看来的错觉。
 >
 
+### MySQL源码
 
-### 1. 主函数sql/mysqld.cc中，代码如下：
+---
+#### **1. 主函数sql/mysqld.cc中，代码如下：**
 ```
 int main(int argc, char **argv) //标准入口函数
 {
@@ -34,7 +36,7 @@ int main(int argc, char **argv) //标准入口函数
     handle_connections_sockets();//主要处理函数，处理新的连接并创建新的线程处理
 }
 ```
-### 2.监听连接: sql/mysqld.cc - handle_connections_sockets:
+#### **2.监听连接: sql/mysqld.cc - handle_connections_sockets:**
 
 ```
 pthread_handler_t handle_connections_sockets(void *arg __attribute__((unused))) {
@@ -52,7 +54,7 @@ pthread_handler_t handle_connections_sockets(void *arg __attribute__((unused))) 
 
 ```
 
-### 3. 创建连接 sql/mysqld.cc  create_new_thread/create_thread_to_handle_connection:
+#### **3. 创建连接 sql/mysqld.cc  create_new_thread/create_thread_to_handle_connection:**
 
 ```
 static void create_new_thread(THD *thd) {
@@ -67,7 +69,7 @@ static void create_new_thread(THD *thd) {
 
 ```
 
-### 4. 线程调度器thread_scheduler - create_thread_to_handle_connection
+#### **4. 线程调度器thread_scheduler - create_thread_to_handle_connection**
 
 ```
 void create_thread_to_handle_connection(THD *thd) {
@@ -82,7 +84,7 @@ void create_thread_to_handle_connection(THD *thd) {
 
 ```
 
-### 5.handle_one_connection
+#### **5.handle_one_connection**
 ```
 pthread_handler_t handle_one_connection(void *arg) {
     thread_scheduler.init_new_connection_thread(); // 初始化线程预处理操作
@@ -98,7 +100,7 @@ pthread_handler_t handle_one_connection(void *arg) {
 
 ```
 
-### 6.执行语句 sql/sql_parse.cc - do_command函数
+#### **6.执行语句 sql/sql_parse.cc - do_command函数**
 
 ```
 bool do_command(THD *thd) {
@@ -111,7 +113,7 @@ bool do_command(THD *thd) {
 
 ```
 
-###  7.指令分发 sql/sql_parse.cc定义dispatch_command
+####  **7.指令分发 sql/sql_parse.cc定义dispatch_command**
 
 ```
 bool dispatch_command(enum enum_server_command command, THD *thd, char* packet, uint packet_length) {
@@ -131,7 +133,7 @@ bool dispatch_command(enum enum_server_command command, THD *thd, char* packet, 
 ```
 
 
-### 8.sql/sql_parse.cc mysql_parse函数负责解析SQL
+#### **8.sql/sql_parse.cc mysql_parse函数负责解析SQL**
 
 ```
 void mysql_parse(THD *thd, const char *inBuf, uint length, const char ** found_semicolon) {
@@ -145,7 +147,7 @@ void mysql_parse(THD *thd, const char *inBuf, uint length, const char ** found_s
 
 ```
 
-### 9.执行命令 mysql_execute_command
+#### **9.执行命令 mysql_execute_command**
 
 ```
 int mysql_execute_command(THD *thd) {
@@ -165,7 +167,7 @@ int mysql_execute_command(THD *thd) {
 }
 
 ```
-### 10.接下来sql/sql_insert.cc中mysql_insert函数
+#### **10.接下来sql/sql_insert.cc中mysql_insert函数**
 ```
 bool mysql_insert(THD *thd,
                    TABLE_LIST *table_list,      // 该INSERT要用到的表
@@ -179,7 +181,7 @@ bool mysql_insert(THD *thd,
 } //里面还有trigger，错误，view之类的杂七杂八的东西，我们都忽略
 ```
 
-### 11.接着看真正写数据的函数write_record (在sql/sql_insert.cc),精简代码如下:
+#### **11.接着看真正写数据的函数write_record (在sql/sql_insert.cc),精简代码如下:**
 ```
 int write_record(THD *thd, TABLE *table,COPY_INFO *info) {  // 写数据记录
     if (info->handle_duplicates == DUP_REPLACE || info->handle_duplicates == DUP_UPDATE) { //如果是REPLACE或UPDATE则替换数据
@@ -199,5 +201,6 @@ int handler::ha_write_row(uchar *buf) { //这是啥? Handler API !
 
 ---
 ### 请求数据流
+
 
 ![](img/in-post/post-2017-10-11/post-mysql-data-stream.jpg)
