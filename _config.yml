@@ -87,10 +87,7 @@ service-worker: true
 # Friends
 friends: [
     {
-        title: "Iamasoldier6",
-        href: "http://iamasoldier6.com/"
-    },{
-        title: "乱序",
-        href: "http://mida.re/"
+        title: "",
+        href: ""
     }
 ]
