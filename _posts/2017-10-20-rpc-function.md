@@ -101,3 +101,9 @@ tags:
 |低时延 | 在同等资源占用情况下，服务调用时延要尽量低 |
 |性能线性增长  |扩展服务提供者，性能要能够线性增长 |
 
+**注：**
+ > [源代码见GitHub](https://github.com/Tangocc/rpc)  
+ > [CSDN博客](http://blog.csdn.net/u013291818/article/details/78351206)
+
+---
+> 后记：纵使烟雾缭绕，我必奋然前行。
