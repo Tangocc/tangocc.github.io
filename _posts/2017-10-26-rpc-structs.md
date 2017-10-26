@@ -22,9 +22,9 @@ tags:
 
 ## 原理
  虽然各种开源框架实现细节不同，但其基本原理如下所示：
- <center>
+
 ![](/img/in-post/post-2017-10-11/post-rpc-structs.jpg)
-</center>  
+ 
 
  1. 服务端服务发布：
  
