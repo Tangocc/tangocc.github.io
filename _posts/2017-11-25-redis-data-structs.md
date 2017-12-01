@@ -131,7 +131,7 @@ typedef struct {
 ```
 list结构为链表提供了表头指针head、表尾指针tail以及链表长度计数器le，而dup、free\match函数则是用于实现多态链表所需的类型特定函数。
 下图是一个list链表结构示意图：
-[](/img/redis-list-struct.png)
+[](./img/redis-list-struct.png)
 
 ### 总结  
 
