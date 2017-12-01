@@ -131,7 +131,7 @@ typedef struct {
 ```
 list结构为链表提供了表头指针head、表尾指针tail以及链表长度计数器le，而dup、free\match函数则是用于实现多态链表所需的类型特定函数。
 下图是一个list链表结构示意图：
-[](./img/redis-list-struct.png)
+[](./imgs/redis-list-struct.png)
 
 ### 总结  
 
@@ -306,8 +306,8 @@ typedef struct intset{
 
 ---
 
-**本文以上主要介绍Redis中常用的5中底层数据结构，其作为五大对象Object的底层实现基本数据结构,理解其原理很容易理解Object实现原理以及常用命令的实现原理。接下来文章将介绍五大对象`string`、`set`、`sortedset`、`hash`、`list`的实现原理。**
+**本文以上主要介绍Redis中常用的5中底层数据结构，其作为五大对象Object的底层实现基本数据结构,理解其原理很容易理解Object实现原理以及常用命令的实现原理。接下来文章将介绍五大对象`string`、`set`、`sortedset`、`hash`、`list`的实现原理。**  
 
-###参考文献
+### 参考文献
 > 《Redis设计与实现(第二版)》
 
