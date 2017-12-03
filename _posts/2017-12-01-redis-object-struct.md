@@ -89,8 +89,8 @@ typedef struct redisObject{
 - 如果字符串对象保存的是一个**字符串值**，并且这个字符串的**长度大于32个字节**，那么字符串对象将使用一个简单动态字符串(SDS)保存，即编码方式采用**raw.**
 - 如果字符串对象保存的是一个**字符串值**，并且这个字符串的**长度小于于32个字节**，那么字符串对象将使用**embstr字符串保存(连续一块内存)**，即编码方式采用**embstr**.
 如图是三种编码方式内存结构:
-![](./imgs/redis-string-object.png)
-
+![](./imgs/redis-string-object.jpg)
+![](/_post/imgs/redis-string-object.jpg)
 字符串常用命令:  
 
 |命令|功能|说明|
