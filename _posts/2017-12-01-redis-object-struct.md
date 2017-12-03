@@ -151,7 +151,7 @@ typedef struct redisObject{
 |HLEN|返回哈希对象中键值对的数量|Hash Length|
 |HGETALL|返回哈希对象中所有的键和值|Hash Get All|
 
-## 4.集合对象
+## 5.集合对象
 集合对象采用intset、hashtable两种编码方式。其底层数据结构采用的编码方式的原则:  
 
 - 集合对象保存的所有**元素都是整数值**时,采用**intset**编码方式；
@@ -172,7 +172,7 @@ typedef struct redisObject{
 |SPOP|随机返回集合中一个元素,并且删除这个元素|Set Pop|
 |SREM|删除集合中指定元素|Set Remove|
 
-## 5.有序集合对象
+## 6.有序集合对象
 有序集合对象采用ziplist或者skiplist编码方式。其底层数据结构编码方式原则:  
 
 - 有序集合保存的元素**数量小于128**个,有序集合对象采用**ziplist**编码方式
@@ -196,7 +196,9 @@ typedef struct redisObject{
 |ZREM|删除给定的元素|ZRemove|
 |ZSCORE|查找给定元素的分值|Z Score|
 
-##总结
+---
+
+## 总结
 
 **本文主要介绍Redis数据库中五大对象底层实现的原理，以及每种对象其底层源码编码方式的使用场景，并简单介绍各个对象常用的命令以及含义。**
 

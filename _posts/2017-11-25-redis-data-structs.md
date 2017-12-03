@@ -132,7 +132,7 @@ typedef struct {
 ```
 list结构为链表提供了表头指针head、表尾指针tail以及链表长度计数器le，而dup、free\match函数则是用于实现多态链表所需的类型特定函数。
 下图是一个list链表结构示意图：
-![](/_post/imgs/redis-list-struct.png)
+![](/img/in-post/redis/redis-list-struct.png)
 
 ### 总结  
 
@@ -193,7 +193,7 @@ typedef struct dict{
 } dict;
 ```
 如图是一个例子:
-![](./imgs/redis-map.jpg)
+![](/img/in-post/redis/redis-map.jpg)
 
 #### 哈希表扩容
 哈希表扩容步骤如下:  
@@ -260,7 +260,7 @@ typedef struct zlentry {
 ```
 
 如下图是一个例子：
-![](./imgs/redis-ziplist.jpg)
+![](/img/in-post/redis/redis-ziplist.jpg)
 
 ### 总结
 - 压缩列表是一种提高内存使用效率的顺序型数据结构
@@ -290,7 +290,7 @@ typedef struct intset{
 - length表示contents中存储整数的个数。   
  
 下图是一个例子:
-![](./imgs/redis-intset.jpg)  
+![](/img/in-post/redis/redis-intset.jpg)  
 
 当向集合中添加新元素，如果现有编码长度小于新元素的长度，就需要进行集合编码升级，升级分为3步:  
 
