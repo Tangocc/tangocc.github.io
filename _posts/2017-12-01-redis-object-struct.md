@@ -31,8 +31,8 @@ typedef struct redisObject{
 }
 ```
 其内存结构如图所示:
-[]()
 
+![](./imgs/redis-object-struct.png)
 其中类型`type`如下:
 
 |类型常量|对象名称|
