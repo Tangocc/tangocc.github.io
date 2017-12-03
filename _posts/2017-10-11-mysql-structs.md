@@ -8,20 +8,19 @@ header-img: "img/in-post/post-2017-10-11/post-bg-universe.jpg"
 catalog: true
 tags:   
     - MySql数据库 
+    - 数据库架构
+    
 ---
-
-
->   真正的高手从来不是临场发挥，随机应变是外人看来的错觉。
 
 
 > 　　MySQL是一个开放源代码的关系数据库管理系统。原开发者为瑞典的MySQL AB公司，最早是在2001年MySQL3.23进入到管理员的视野并在之后获得广泛的应用。 2008年MySQL公司被Sun公司收购并发布了首个收购之后的版本MySQL5.1，该版本引入分区、基于行复制以及plugin API。移除了原有的BerkeyDB引擎，同时，Oracle收购InnoDB Oy发布了InnoDB plugin，这后来发展成为著名的InnoDB引擎。2010年Oracle收购Sun公司，这也使得MySQL归入Oracle门下，之后Oracle发布了收购以后的首个版本5.5，该版本主要改善集中在性能、扩展性、复制、分区以及对windows的支持。目前版本已发展到5.7。
   　　和其它数据库相比，MySQL有点与众不同，它的架构可以在多种不同场景中应用并发挥良好作用。主要体现在存储引擎的架构上，插件式的存储引擎架构将查询处理和其它的系统任务以及数据的存储提取相分离。这种架构可以根据业务的需求和实际需要选择合适的存储引擎。
 
 ---
-### 数据库架构
+### 1.数据库架构
 
 
-![](/img/in-post/post-2017-10-11/post-mysql-structs.jpg)
+![](/img/in-post/mysql/post-mysql-structs.jpg)
 
 
  1. Connection Pool
@@ -41,7 +40,7 @@ tags:
 >
  
 ---
-### MySQL目录结构
+### 2.MySQL目录结构
 ```
 - BUILD: 内含在各个平台、各种编译器下进行编译的脚本。如compile-pentium-debug表示在pentium架构上进行调试编译的脚本。
 - client: 客户端工具，如mysql,mysqladmin之类。
@@ -77,7 +76,7 @@ tags:
 - zlib: zlib算法库(GNU)
 ```
 ---
-### InnoDB目录结构
+### 3.InnoDB目录结构
 ```
 - btr: B+树的实现
 - buf: 缓冲池的实现,包括LRU算法,Flush刷新算法等
@@ -108,7 +107,7 @@ tags:
 - ut: 各种通用小工具
 ```
 ---
-### 核心类库
+### 4.核心类库
 ```
 - THD: 线程类
 - Item: Item类(查询条目,函数,WHERE,ORDER,GROUP,ON子句等)
@@ -122,10 +121,10 @@ tags:
 ```
 
 ---
-### 客户端与服务端交互
+### 5.客户端与服务端交互
 
 
-![](/img/in-post/post-2017-10-11/post-mysql-client-server.jpg)
+![](/img/in-post/mysql/post-mysql-client-server.jpg)
 
  - **客户端:**各种语言层面**jdbc**驱动可以理解为客户端，客户端通过连接池与服务器进行交互。  
  - **服务端:**服务端采用**select/poll IO**多路复用机制实现客户端的连接，后端采用**线程池处理与客户端的连接**；当接收到客户端连接，服务器首先会查询是否有空闲线程，如果有则获得线程处理与客户端的交互，否则验证当前线程数是否大于max\_connections，如果小于**max_connections**，则创建线程，否则丢弃连接。  

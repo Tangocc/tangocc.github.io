@@ -12,10 +12,9 @@ tags:
 
 
 >源码才是王道。  
->真正的高手从来不是临场发挥，随机应变是外人看来的错觉。
 >
 
-### MySQL源码
+### 1.MySQL源码
 
 ---
 #### **1. 主函数sql/mysqld.cc中，代码如下：**
@@ -200,7 +199,7 @@ int handler::ha_write_row(uchar *buf) { //这是啥? Handler API !
 ```
 
 ---
-### 请求数据流
+### 2.请求数据流
 
 
-![](/img/in-post/post-2017-10-11/post-mysql-data-stream.jpg)
+![](/img/in-post/mysql/post-mysql-data-stream.jpg)
