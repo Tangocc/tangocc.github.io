@@ -32,7 +32,7 @@ typedef struct redisObject{
 ```
 其内存结构如图所示:
 ![](/img/in-post/redis/redis-object-struct.png)
-其中类型`type`如下:   
+其中类型`type`如下:  
 
 |类型常量|对象名称|
 |:---|:----|
@@ -40,7 +40,8 @@ typedef struct redisObject{
 |REDIS_LIST|列表对象|
 |REDIS_HASH|哈希对象|
 |REDIS_SET|集合对象|
-|REDIS_ZSET|有序集合对象|
+|REDIS_ZSET|有序集合对象|  
+
 `encoding`如下:  
 
 |编码常量|底层数据结构|
@@ -68,7 +69,8 @@ typedef struct redisObject{
 |REDIS_SET|REDIS_ENCODING_INTSET| 整数集合实现的集合对象|
 |REDIS_SET|REDIS_ENCODING_HT| 字典实现的集合对象|
 |REDIS_ZSET|REDIS_ENCODING_ZIPLIST| 压缩列表实现的有序集合对象|
-|REDIS_ZSET|REDIS_ENCODING_SKIPLIST|跳跃表和字典实现的有序集合对象 |
+|REDIS_ZSET|REDIS_ENCODING_SKIPLIST|跳跃表和字典实现的有序集合对象 |  
+
 从上表可以看出任意一种对象都**至少有两种实现方式**。
 `OBJECT ENCODING `命令显示对象的编码类型  
 
