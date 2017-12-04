@@ -1,6 +1,6 @@
 ---
 layout:     post
-title:      "REDIS系列之五大对象实现原理"
+title:      "REDIS系列之五大对象原理"
 subtitle:   ""
 date:       2017-12-01 12:00:00
 author:     "Tango"
@@ -8,14 +8,14 @@ header-img: "img/in-post/post-2017-10-11/post-bg-universe.jpg"
 catalog: true
 tags:   
     - REDIS
-    - key-value
+    - KEY-VALUE
     - 缓存  
 ---  
 
-Redis并没有采用上文介绍的底层数据结构实现键值对数据库，而是基于底层数据结构实现一套对象系统,包括字符串对象、链表对象、哈希对象、集合对象、排序集合对象。而且，每个对象的底层实现至少存在两种,针对不同的应用场景可以选择不同的实现方式,从而提高效率。
+Redis并没有采用上文介绍的底层数据结构实现键值对数据库，而是基于底层数据结构实现一套对象系统,包括**字符串对象、链表对象、哈希对象、集合对象、排序集合对象**。而且，每个对象的底层实现**至少**存在两种,针对不同的应用场景可以选择不同的实现方式,从而提高效率。
 
 ## 1.对象系统
-Redis是key-value数据库,每创建一个键值对就会创建两个对象，即一个键对象，一个值对象。Redis中默认键是string对象，值是redisObject对象。其结构如下:  
+Redis是`key-value`数据库,每创建一个键值对就会创建两个对象，即一个键对象，一个值对象。Redis中默认键是字符串对象，值是`redisObject`对象。其结构如下:  
 
 ```
 typedef struct redisObject{
@@ -31,9 +31,8 @@ typedef struct redisObject{
 }
 ```
 其内存结构如图所示:
-
 ![](/img/in-post/redis/redis-object-struct.png)
-其中类型`type`如下:
+其中类型`type`如下:   
 
 |类型常量|对象名称|
 |:---|:----|
@@ -42,11 +41,10 @@ typedef struct redisObject{
 |REDIS_HASH|哈希对象|
 |REDIS_SET|集合对象|
 |REDIS_ZSET|有序集合对象|
-
 `encoding`如下:  
 
 |编码常量|底层数据结构|
-|:--:|:--:|
+|:--|:--|
 |REDIS_ENCODING_INT|long型整数|
 |REDIS_ENCODING_EMBSTR|embstr编码简单动态字符串|
 |REDIS_ENCODING_RAW|简单动态字符串|
@@ -71,9 +69,7 @@ typedef struct redisObject{
 |REDIS_SET|REDIS_ENCODING_HT| 字典实现的集合对象|
 |REDIS_ZSET|REDIS_ENCODING_ZIPLIST| 压缩列表实现的有序集合对象|
 |REDIS_ZSET|REDIS_ENCODING_SKIPLIST|跳跃表和字典实现的有序集合对象 |
-
 从上表可以看出任意一种对象都**至少有两种实现方式**。
-
 `OBJECT ENCODING `命令显示对象的编码类型  
 
   ``` 
@@ -83,7 +79,7 @@ typedef struct redisObject{
   ```
 
 ## 2.字符串对象
-字符串对象有int、raw、embstr三种编码方式,其底层数据结构三个原则:  
+字符串对象有`int`、`raw`、`embstr`三种编码方式,其底层数据结构三个原则:  
 
 - 如果字符串对象保存的是**整数值**,并且这个整数值可以用long型数据表示，则底层数据采用**int型编码**
 - 如果字符串对象保存的是一个**字符串值**，并且这个字符串的**长度大于32个字节**，那么字符串对象将使用一个简单动态字符串(SDS)保存，即编码方式采用**raw.**
@@ -106,14 +102,13 @@ typedef struct redisObject{
 
 
 ## 3.列表对象
-列表对象ziplist、linkedlist两种编码方式，其底层数据结构采用编码方式的原则:  
+列表对象`ziplist`、`linkedlist`两种编码方式，其底层数据结构采用编码方式的原则:  
   
 - 列表对象保存的 所有字符串元素的**长度都小于64字节**时,**采用ziplist编码**
 - 列表对象保存的**元素数量小于512个**时，采用**ziplist**编码  
 - **不满足上述条件其他情况**,都采用**linkedlist**编码方式。  
 
 其内存结构如下图所示:  
-
 ![](/img/in-post/redis/redis-list-object.png)
 列表常用命令如下:  
 
@@ -131,15 +126,14 @@ typedef struct redisObject{
 |LSET|将指定位置的元素保存的值替换为新节点值|List Set|
 
 ## 4.哈希对象
-哈希对象采用ziplist、hashtable两种编码方式实现。其底层数据结构采用的编码方式的原则:   
+哈希对象采用`ziplist`、`hashtable`两种编码方式实现。其底层数据结构采用的编码方式的原则:   
  
 - 哈希对象保存的所有键值对的键和值的**字符串长度都小于64字节**，采用**ziplist**编码方式
 - 哈希对象保存的**键值对数量小于512个**，采用**ziplist**编码
 - 不**满足上述两个条件**则采用**hashtable**编码方式  
 
 如图是两种编码方式内存结构: 
-![]()  
-
+![](/img/in-post/redis/redis-hash-object.png)  
 哈希对象常用命令如下:
 
 |命令|功能|说明|
@@ -159,8 +153,7 @@ typedef struct redisObject{
 - **不满足上述两个条件**采用**hashtable**编码方式
 
 如图是两种编码方式内存结构:
-[]()
-
+![](/img/in-post/redis/redis-set-object.png)
 集合对象常用命令如下:
 
 |命令|功能|说明|
@@ -180,8 +173,7 @@ typedef struct redisObject{
 - **不满足上述两个条件**时，采用**skiplist**编码方式。
 
 如图是两种编码方式内存结构:
-[]()
-
+![](/img/in-post/redis/redis-sortset-object.png)
 有序集合对象常用命令如下:  
 
 |命令|功能|说明|  
@@ -195,8 +187,6 @@ typedef struct redisObject{
 |ZREVRANK|逆序遍历集合,返回对应元素在集合中的排名|Z Reverse Rank|
 |ZREM|删除给定的元素|ZRemove|
 |ZSCORE|查找给定元素的分值|Z Score|
-
----
 
 ## 总结
 
