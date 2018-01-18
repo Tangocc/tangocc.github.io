@@ -12,10 +12,7 @@ tags:
     - Linux命令
 ---
 
-**grep(global search regular expression(RE) and print out the line，全面搜索正则表达式并把行打印出来),倾向于理解为抓取、获取。grep命令是强大的正则表达式w文本搜索命令,其常常配合文本相关命令使用。**
-
-> 注意:ps命令只是显示瞬时的进程状态信息。区别与top命令，则是动态显示进程状态信息，即是实时刷新。
->   
+grep (global search regular expression(RE) and print out the line，全面搜索正则表达式并把行打印出来),倾向于理解为抓取、获取。grep命令是强大的正则表达式文本搜索命令,其常常配合文本相关命令使用。
 
 
 ### 命令格式
