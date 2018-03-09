@@ -1,6 +1,6 @@
 ---
 layout:     post
-title:      "面试算法题"
+title:      "经典面试算法题"
 subtitle:   ""
 date:       2017-11-22 12:00:00
 author:     "Tango"
