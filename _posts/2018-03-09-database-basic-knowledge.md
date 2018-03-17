@@ -134,10 +134,8 @@ truncate table 在功能上与不带 WHERE 子句的 DELETE 语句相同：二�
 ```  
 
 ### 8.索引原理
-```
 
 ![](../imgs/mysql/post-mysql-index-btree.png)
-```
 
 ### 9.创建索引？
 
