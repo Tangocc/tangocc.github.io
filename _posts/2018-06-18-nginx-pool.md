@@ -69,7 +69,7 @@ struct ngx_pool_s {
 ---
 
 
-#### 创建内存池
+#### 创建内存池 `ngx_create_pool(size_t size, ngx_log_t * log)`
 ```
 
 /*
@@ -114,7 +114,7 @@ ngx_pool_t * ngx_create_pool(size_t size, ngx_log_t * log)
 }
 ```
 
-#### 内存池申请内存 ngx_palloc(ngx_pool_t * pool, size_t size)
+#### 内存池申请内存 `ngx_palloc(ngx_pool_t * pool, size_t size)`
 
 ```
 
@@ -135,7 +135,7 @@ void * ngx_palloc(ngx_pool_t * pool, size_t size)
 }
 ```
 
-#### 申请小内存 ngx_palloc_small(ngx_pool_t * pool, size_t size, ngx_uint_t align)
+#### 申请小内存 `ngx_palloc_small(ngx_pool_t * pool, size_t size, ngx_uint_t align)`
 ```
 /**
  * 分配小块内存(小于max参数指定大小)
@@ -174,7 +174,7 @@ static ngx_inline void * ngx_palloc_small(ngx_pool_t * pool, size_t size, ngx_ui
 
 ```
 
-#### 申请内存块  ngx_palloc_block(ngx_pool_t * pool, size_t size)
+#### 申请内存块  `ngx_palloc_block(ngx_pool_t * pool, size_t size)`
 
 ```
 /**
@@ -216,7 +216,7 @@ static void * ngx_palloc_block(ngx_pool_t * pool, size_t size)
 
 
 ```
-#### 申请大内存块 ngx_palloc_large(ngx_pool_t * pool, size_t size)
+#### 申请大内存块 `ngx_palloc_large(ngx_pool_t * pool, size_t size)`
 ```
 /**
  * 分配大内存块
