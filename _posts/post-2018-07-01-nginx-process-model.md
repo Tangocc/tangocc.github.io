@@ -1,3 +1,15 @@
+---
+layout:     post
+title:      "NGINX系列之进程模型"
+subtitle:   ""
+date:       2018-03-20 12:00:00
+author:     "Tango"
+header-img: "img/in-post/post-2017-10-11/post-bg-universe.jpg"
+catalog: true
+tags:   
+    - nginx
+    - 系统架构
+---
 
 在上一节中分析了nginx主流程，在`mian`函数中完成服务器的配置文件解析以及模块初始化工作后，根据系统设置进入单进程或者多进程模式，本文将分析nginx进程模型。
 
@@ -11,10 +23,9 @@
   单线程避免资源争夺的竞争以及上下文切换带来的损耗，多进程提高“机器”个数，提高系统的整体并发性。
 
 从上文中可知，nginx分为单进程模式和多进程模式，单进程模式常常在开发环境调试时候使用，在对外服务时nginx多以多进程方式工作。多进程工作方式中为方便进程的统一管理，系统中分为一个master进程和多个work进程，master进程主要负责信号处理以及work进程的管理，包括接收外界信号、向worker进程发送信号，监控worker进程的运行状态等，不直接对外提供web服务;worker进程则主要对外提供web服务，各个work进程之间相互隔离且相互平等，从而避免进程之间的竞争导致的性能损耗，worker进程上数目可以设置，一般设置为机器cpu核数(原因还是降低进程之间上下文切换带来的损耗)。其进程模型可以用下图表示：
+![](/img/in-post/post-2018-07-03-nginx-process-model.png)
 
 ### 源码分析
-
-
 
 #### 多进程模式`ngx_master_process_cycle`
 - 文件位置：/src/os/unix/ngx_process_cycle.c
