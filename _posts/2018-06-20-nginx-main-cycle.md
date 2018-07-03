@@ -1,7 +1,9 @@
 
+### 核心数据结构
+
+- 全局变量cycle数据结构
 
 ```
-
 struct ngx_cycle_s {
     void                  ****conf_ctx;
     ngx_pool_t               *pool;
@@ -46,7 +48,10 @@ struct ngx_cycle_s {
     ngx_str_t                 lock_file;
     ngx_str_t                 hostname;
 };
+```
+- Main核心配置数据结构
 
+```
 //核心配置
 typedef struct {
     ngx_flag_t                daemon;
@@ -55,7 +60,7 @@ typedef struct {
     ngx_msec_t                timer_resolution;
     ngx_msec_t                shutdown_timeout;
 
-    ngx_int_t                 worker_processes;
+    ngx_int_t                 worker_processes; 
     ngx_int_t                 debug_points;
 
     ngx_int_t                 rlimit_nofile;
@@ -82,8 +87,11 @@ typedef struct {
 
     ngx_uint_t                transparent;  /* unsigned  transparent:1; */
 } ngx_core_conf_t;
+```
 
+- 模块数据结构
 
+```
 //模块数据结构
 struct ngx_module_s {
     ngx_uint_t            ctx_index;
@@ -199,6 +207,7 @@ int ngx_cdecl main(int argc, char *const *argv)
 
 ### 预初始化模块 `ngx_preinit_modules()`
 - 文件位置 `/src/ngx_module.c`
+- 主要工作：配置各个模块的顺序索引
 
 ```
 ngx_int_t ngx_preinit_modules(void)
@@ -217,6 +226,7 @@ ngx_int_t ngx_preinit_modules(void)
 }
 
 ```
+
 `ngx_preinit_modules()`函数主要完成模块到序号初始化，其数组`ngx_modules`是何时产生的呢？  
 
 - `ngx_modules`包含所有nginx定义的模块,其初始化是由执行configure命令前定义.
@@ -224,6 +234,7 @@ ngx_int_t ngx_preinit_modules(void)
 
 ### `ngx_init_cycle`
 - 文件位置 `/src/ngx_module.c`
+- 主要工作：初始化系统时钟、主机名、模块配置文件、各种后续数据结构，形成全局变量cycle
 
 ```C
 
@@ -301,7 +312,7 @@ ngx_cycle_t * ngx_init_cycle(ngx_cycle_t *old_cycle)
     ngx_conf_param(&conf);     
     ngx_conf_parse(&conf, &cycle->conf_file)
     
-    // 调用核心模块的init_conf回调函数 
+    // 6.调用核心模块的init_conf回调函数 
      for (i = 0; cycle->modules[i]; i++) {
         if (cycle->modules[i]->type != NGX_CORE_MODULE) {
             continue;
@@ -312,12 +323,11 @@ ngx_cycle_t * ngx_init_cycle(ngx_cycle_t *old_cycle)
         }
     }
 
-    //单进程模式则直接返回
+    // 7.单进程模式则直接返回
     if (ngx_process == NGX_PROCESS_SIGNALLER) {
         return cycle;
     }
-
-    //多进程模式则创建pid文件
+    // 8.多进程模式则创建pid文件
     ccf = (ngx_core_conf_t *) ngx_get_conf(cycle->conf_ctx, ngx_core_module);
     ngx_create_pidfile(&ccf->pid, log);
     ngx_open_listening_sockets(cycle) 
@@ -329,10 +339,12 @@ ngx_cycle_t * ngx_init_cycle(ngx_cycle_t *old_cycle)
   }
 
 ```
-### ngx_cycle_modules
+### `ngx_cycle_modules`
+- 文件位置：
+- 主要工作：生成modules数组
+
 ```
-ngx_int_t
-ngx_cycle_modules(ngx_cycle_t *cycle)
+ngx_int_t ngx_cycle_modules(ngx_cycle_t *cycle)
 {
     /*
      * create a list of modules to be used for this cycle,
@@ -358,6 +370,9 @@ ngx_cycle_modules(ngx_cycle_t *cycle)
 
 ### `ngx_init_modules `
 
+- 文件位置
+- 主要工作：回调各个模块初始化函数
+
 ```
 ngx_int_t ngx_init_modules(ngx_cycle_t *cycle)
 {
@@ -373,5 +388,21 @@ ngx_int_t ngx_init_modules(ngx_cycle_t *cycle)
 
     return NGX_OK;
 }
+
+```
+
+
+### `ngx_single_process_cycle `
+
+
+```
+
+
+```
+
+### `ngx_master_process_cycle `
+
+```
+
 
 ```
