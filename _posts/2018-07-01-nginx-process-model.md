@@ -22,7 +22,8 @@ tags:
 - 多进程单线程
   单线程避免资源争夺的竞争以及上下文切换带来的损耗，多进程提高“机器”个数，提高系统的整体并发性。
 
-从上文中可知，nginx分为单进程模式和多进程模式，单进程模式常常在开发环境调试时候使用，在对外服务时nginx多以多进程方式工作。多进程工作方式中为方便进程的统一管理，系统中分为一个master进程和多个work进程，master进程主要负责信号处理以及work进程的管理，包括接收外界信号、向worker进程发送信号，监控worker进程的运行状态等，不直接对外提供web服务;worker进程则主要对外提供web服务，各个work进程之间相互隔离且相互平等，从而避免进程之间的竞争导致的性能损耗，worker进程上数目可以设置，一般设置为机器cpu核数(原因还是降低进程之间上下文切换带来的损耗)。其进程模型可以用下图表示：
+从上文中可知，nginx分为单进程模式和多进程模式，单进程模式常常在开发环境调试时候使用，在对外服务时nginx多以多进程方式工作。多进程工作方式中为方便进程的统一管理，系统中分为一个master进程和多个work进程，master进程主要负责信号处理以及work进程的管理，包括接收外界信号、向worker进程发送信号，监控worker进程的运行状态等，不直接对外提供web服务;worker进程则主要对外提供web服务，各个work进程之间相互隔离且相互平等，从而避免进程之间的竞争导致的性能损耗，worker进程上数目可以设置，一般设置为机器cpu核数(原因还是降低进程之间上下文切换带来的损耗)。其进程模型可以用下图表示：  
+
 ![](/img/in-post/post-2018-07-03-nginx-process-model.png)
 
 ### 流程伪代码
@@ -32,8 +33,11 @@ tags:
    主进程启动以后首先初始化系统相应的信号量标志位，然后根据配置参数(子进程个数、最大连接数等)通过fork复制创建工作进程，子进程与master进程具有相同的环境，接下来主进程和工作进程进入不同的循环，主进程保存子进程返回的pid写入文件，接着主进程进入信号处理的循环，监听系统接收到的(例如nginx -reload)信号并进行相关的处理。
 master进程有如下几种信号：  
 
-- 
+- TERM INT 快速停止
+- QUIT 从容关闭
+- HUP 平滑重启
 
+流程伪代码如下：
 
 ```
 void ngx_master_process_cycle(ngx_cycle_t *cycle){
@@ -71,31 +75,31 @@ void ngx_master_process_cycle(ngx_cycle_t *cycle){
 ```
 
 #### worker工作进程
-通过主进程fork复制出worker进程，worker进程环境变量(监听socket、文件描述符等)都一样，因此各个worker进程完成等同，在相同的socket端口监听，请求到来时，每个worker工作进程都会监听到，但最终只会有一个worker进程会接受并处理，（此处涉及到惊群现象,将在下篇文章介绍)。创建工作进程以后，工作进程进入循环，首先处理退出信号，然后进入事件处理过程ngx_process_events_and_timers(cycle)，在进程处理函数中，首先处理定时任务，然后处理读取任务再处理写任务。这里有三个小问题：  
+ 通过主进程fork复制出worker进程，worker进程环境变量(监听socket、文件描述符等)都一样，因此各个worker进程完成等同，在相同的socket端口监听，请求到来时，每个worker工作进程都会监听到，但最终只会有一个worker进程会接受并处理，（此处涉及到惊群现象,将在下篇文章介绍)。创建工作进程以后，工作进程进入循环，首先处理退出信号，然后进入事件处理过程ngx_process_events_and_timers(cycle)，在进程处理函数中，首先处理定时任务，然后处理读取任务再处理写任务。这里有三个小问题：  
 
 - 为什么要采用这种处理顺序？
 - 定时任务是如何保证基本准确定时的?
 - 事件处理怎么保证一个请求只被一个进程处理的?
 
 上述问题将在下一篇事件处理模型中介绍。
+流程伪代码如下：
 
 ```
-static void
-ngx_worker_process_cycle(ngx_cycle_t *cycle, void *data)
+static void ngx_worker_process_cycle(ngx_cycle_t *cycle, void *data)
 {
-    
+    // 1.初始化worker进程
     ngx_worker_process_init(cycle, worker);
 
-    while(1){
-
+    while(1){	
+		 // 1.处理退出信息
         if (ngx_exiting) {
             if (ngx_event_no_timers_left() == NGX_OK) {
                  ngx_worker_process_exit(cycle);
             }
         }
-        
+        // 2.事件处理 将在下一章节介绍
         ngx_process_events_and_timers(cycle);
-
+		 // 3.
         if (ngx_terminate) {
             ngx_worker_process_exit(cycle);
         }
@@ -118,7 +122,7 @@ ngx_worker_process_cycle(ngx_cycle_t *cycle, void *data)
 ```
 
 
-### 源码分析
+### 精简源码分析
 
 #### 多进程模式`ngx_master_process_cycle`
 - 文件位置：/src/os/unix/ngx_process_cycle.c
@@ -175,7 +179,7 @@ void ngx_master_process_cycle(ngx_cycle_t *cycle)
         }
 
         if (ngx_terminate) {
-           ngx_signal_worker_processes(cycle,                                       ngx_signal_value(NGX_TERMINATE_SIGNAL));
+           ngx_signal_worker_processes(cycle,ngx_signal_value(NGX_TERMINATE_SIGNAL));
             }
             continue;
         }
@@ -185,14 +189,10 @@ void ngx_master_process_cycle(ngx_cycle_t *cycle)
         }
 
         if (ngx_reconfigure) {
-            ngx_reconfigure = 0;
-
             if (ngx_new_binary) {
-                ngx_start_worker_processes(cycle, ccf->worker_processes,
-                                           NGX_PROCESS_RESPAWN);
+                ngx_start_worker_processes(cycle, ccf->worker_processes,NGX_PROCESS_RESPAWN);
                 ngx_start_cache_manager_processes(cycle, 0);
                 ngx_noaccepting = 0;
-
                 continue;
             }
 
@@ -212,16 +212,14 @@ void ngx_master_process_cycle(ngx_cycle_t *cycle)
         }
 
         if (ngx_restart) {
-                     ngx_start_worker_processes(cycle, ccf->worker_processes,
-                                       NGX_PROCESS_RESPAWN);
+            ngx_start_worker_processes(cycle, ccf->worker_processes,NGX_PROCESS_RESPAWN);
             ngx_start_cache_manager_processes(cycle, 0);
                    }
 
         if (ngx_reopen) {
             ngx_reopen = 0;
-                     ngx_reopen_files(cycle, ccf->user);
-            ngx_signal_worker_processes(cycle,
-                                        ngx_signal_value(NGX_REOPEN_SIGNAL));
+            ngx_reopen_files(cycle, ccf->user);
+            ngx_signal_worker_processes(cycle,ngx_signal_value(NGX_REOPEN_SIGNAL));
         }
 
         if (ngx_change_binary) {
@@ -237,7 +235,7 @@ void ngx_master_process_cycle(ngx_cycle_t *cycle)
     }
 }
 ```
-
+#### `ngx_start_worker_processes`
 
 ```
 static void
@@ -247,19 +245,14 @@ ngx_start_worker_processes(ngx_cycle_t *cycle, ngx_int_t n, ngx_int_t type)
     ngx_channel_t  ch;
 
     for (i = 0; i < n; i++) {
-
-        ngx_spawn_process(cycle, ngx_worker_process_cycle,
-                          (void *) (intptr_t) i, "worker process", type);
-
-        ch.pid = ngx_processes[ngx_process_slot].pid;
-        ch.slot = ngx_process_slot;
-        ch.fd = ngx_processes[ngx_process_slot].channel[0];
-
+        ngx_spawn_process(cycle, ngx_worker_process_cycle,(void *) (intptr_t) i, "worker process", type);
         ngx_pass_open_channel(cycle, &ch);
     }
 }
+```
+#### `ngx_start_cache_manager_processes `
 
-
+```
 static void
 ngx_start_cache_manager_processes(ngx_cycle_t *cycle, ngx_uint_t respawn)
 {
@@ -289,38 +282,19 @@ ngx_start_cache_manager_processes(ngx_cycle_t *cycle, ngx_uint_t respawn)
     ngx_spawn_process(cycle, ngx_cache_manager_process_cycle,
                       &ngx_cache_manager_ctx, "cache manager process",
                       respawn ? NGX_PROCESS_JUST_RESPAWN : NGX_PROCESS_RESPAWN);
-
-    ngx_memzero(&ch, sizeof(ngx_channel_t));
-
-    ch.command = NGX_CMD_OPEN_CHANNEL;
-    ch.pid = ngx_processes[ngx_process_slot].pid;
-    ch.slot = ngx_process_slot;
-    ch.fd = ngx_processes[ngx_process_slot].channel[0];
-
-    ngx_pass_open_channel(cycle, &ch);
-
-    if (loader == 0) {
-        return;
-    }
-
     ngx_spawn_process(cycle, ngx_cache_manager_process_cycle,
                       &ngx_cache_loader_ctx, "cache loader process",
                       respawn ? NGX_PROCESS_JUST_SPAWN : NGX_PROCESS_NORESPAWN);
-
-    ch.command = NGX_CMD_OPEN_CHANNEL;
-    ch.pid = ngx_processes[ngx_process_slot].pid;
-    ch.slot = ngx_process_slot;
-    ch.fd = ngx_processes[ngx_process_slot].channel[0];
-
     ngx_pass_open_channel(cycle, &ch);
 }
 
 ```
 
+#### `ngx_single_process_cycle`
+
 ```
 
-void
-ngx_single_process_cycle(ngx_cycle_t *cycle)
+void ngx_single_process_cycle(ngx_cycle_t *cycle)
 {
     ngx_uint_t  i;
 
@@ -335,8 +309,8 @@ ngx_single_process_cycle(ngx_cycle_t *cycle)
     }
 
     for ( ;; ) {
-              ngx_process_events_and_timers(cycle);
-
+        
+        ngx_process_events_and_timers(cycle);
         if (ngx_terminate || ngx_quit) {
 
             for (i = 0; cycle->modules[i]; i++) {
@@ -350,9 +324,7 @@ ngx_single_process_cycle(ngx_cycle_t *cycle)
 
         if (ngx_reconfigure) {
             ngx_reconfigure = 0;
-            ngx_log_error(NGX_LOG_NOTICE, cycle->log, 0, "reconfiguring");
-
-            cycle = ngx_init_cycle(cycle);
+                    cycle = ngx_init_cycle(cycle);
             if (cycle == NULL) {
                 cycle = (ngx_cycle_t *) ngx_cycle;
                 continue;
@@ -371,18 +343,11 @@ ngx_single_process_cycle(ngx_cycle_t *cycle)
 
 ```
 
-
+#### `ngx_worker_process_cycle `
 ```
-
-static void
-ngx_worker_process_cycle(ngx_cycle_t *cycle, void *data)
+static void ngx_worker_process_cycle(ngx_cycle_t *cycle, void *data)
 {
-    ngx_int_t worker = (intptr_t) data;
-
-    ngx_process = NGX_PROCESS_WORKER;
-    ngx_worker = worker;
-
-    ngx_worker_process_init(cycle, worker);
+     ngx_worker_process_init(cycle, worker);
 
     for ( ;; ) {
 
@@ -422,138 +387,29 @@ ngx_worker_process_cycle(ngx_cycle_t *cycle, void *data)
 
 
 ```
-
+#### `ngx_spawn_process `
 
 ```
-
-ngx_pid_t
-ngx_spawn_process(ngx_cycle_t *cycle, ngx_spawn_proc_pt proc, void *data,
-    char *name, ngx_int_t respawn)
+ngx_pid_t ngx_spawn_process(ngx_cycle_t *cycle, ngx_spawn_proc_pt proc, void *data,char *name, ngx_int_t respawn)
 {
-    u_long     on;
-    ngx_pid_t  pid;
-    ngx_int_t  s;
-
-    if (respawn >= 0) {
-        s = respawn;
-
-    } else {
-        for (s = 0; s < ngx_last_process; s++) {
-            if (ngx_processes[s].pid == -1) {
-                break;
-            }
-        }
-
-        if (s == NGX_MAX_PROCESSES) {
-            ngx_log_error(NGX_LOG_ALERT, cycle->log, 0,
-                          "no more than %d processes can be spawned",
-                          NGX_MAX_PROCESSES);
-            return NGX_INVALID_PID;
-        }
-    }
-
-
-    if (respawn != NGX_PROCESS_DETACHED) {
-
-        /* Solaris 9 still has no AF_LOCAL */
-
-        if (socketpair(AF_UNIX, SOCK_STREAM, 0, ngx_processes[s].channel) == -1)
-        {
-            ngx_log_error(NGX_LOG_ALERT, cycle->log, ngx_errno,
-                          "socketpair() failed while spawning \"%s\"", name);
-            return NGX_INVALID_PID;
-        }
-
-        ngx_log_debug2(NGX_LOG_DEBUG_CORE, cycle->log, 0,
-                       "channel %d:%d",
-                       ngx_processes[s].channel[0],
-                       ngx_processes[s].channel[1]);
-
-        if (ngx_nonblocking(ngx_processes[s].channel[0]) == -1) {
-            ngx_log_error(NGX_LOG_ALERT, cycle->log, ngx_errno,
-                          ngx_nonblocking_n " failed while spawning \"%s\"",
-                          name);
-            ngx_close_channel(ngx_processes[s].channel, cycle->log);
-            return NGX_INVALID_PID;
-        }
-
-        if (ngx_nonblocking(ngx_processes[s].channel[1]) == -1) {
-            ngx_log_error(NGX_LOG_ALERT, cycle->log, ngx_errno,
-                          ngx_nonblocking_n " failed while spawning \"%s\"",
-                          name);
-            ngx_close_channel(ngx_processes[s].channel, cycle->log);
-            return NGX_INVALID_PID;
-        }
-
-        on = 1;
-        if (ioctl(ngx_processes[s].channel[0], FIOASYNC, &on) == -1) {
-            ngx_log_error(NGX_LOG_ALERT, cycle->log, ngx_errno,
-                          "ioctl(FIOASYNC) failed while spawning \"%s\"", name);
-            ngx_close_channel(ngx_processes[s].channel, cycle->log);
-            return NGX_INVALID_PID;
-        }
-
-        if (fcntl(ngx_processes[s].channel[0], F_SETOWN, ngx_pid) == -1) {
-            ngx_log_error(NGX_LOG_ALERT, cycle->log, ngx_errno,
-                          "fcntl(F_SETOWN) failed while spawning \"%s\"", name);
-            ngx_close_channel(ngx_processes[s].channel, cycle->log);
-            return NGX_INVALID_PID;
-        }
-
-        if (fcntl(ngx_processes[s].channel[0], F_SETFD, FD_CLOEXEC) == -1) {
-            ngx_log_error(NGX_LOG_ALERT, cycle->log, ngx_errno,
-                          "fcntl(FD_CLOEXEC) failed while spawning \"%s\"",
-                           name);
-            ngx_close_channel(ngx_processes[s].channel, cycle->log);
-            return NGX_INVALID_PID;
-        }
-
-        if (fcntl(ngx_processes[s].channel[1], F_SETFD, FD_CLOEXEC) == -1) {
-            ngx_log_error(NGX_LOG_ALERT, cycle->log, ngx_errno,
-                          "fcntl(FD_CLOEXEC) failed while spawning \"%s\"",
-                           name);
-            ngx_close_channel(ngx_processes[s].channel, cycle->log);
-            return NGX_INVALID_PID;
-        }
-
-        ngx_channel = ngx_processes[s].channel[1];
-
-    } else {
-        ngx_processes[s].channel[0] = -1;
-        ngx_processes[s].channel[1] = -1;
-    }
-
-    ngx_process_slot = s;
-
-
+    //创建子进程
     pid = fork();
 
     switch (pid) {
-
     case -1:
-        ngx_log_error(NGX_LOG_ALERT, cycle->log, ngx_errno,
-                      "fork() failed while spawning \"%s\"", name);
         ngx_close_channel(ngx_processes[s].channel, cycle->log);
         return NGX_INVALID_PID;
-
-    case 0:
+    case 0: //worker进程
         ngx_parent = ngx_pid;
         ngx_pid = ngx_getpid();
         proc(cycle, data);
         break;
-
     default:
         break;
     }
 
-    ngx_log_error(NGX_LOG_NOTICE, cycle->log, 0, "start %s %P", name, pid);
-
     ngx_processes[s].pid = pid;
     ngx_processes[s].exited = 0;
-
-    if (respawn >= 0) {
-        return pid;
-    }
 
     ngx_processes[s].proc = proc;
     ngx_processes[s].data = data;
@@ -600,5 +456,6 @@ ngx_spawn_process(ngx_cycle_t *cycle, ngx_spawn_proc_pt proc, void *data,
     return pid;
 }
 
-
 ```
+
+在完成工作进程和主进程创建工作以后，系统进入事件处理阶段，其功能实现主要在函数`ngx_process_events_and_timers `中，文章介绍事件处理模型。

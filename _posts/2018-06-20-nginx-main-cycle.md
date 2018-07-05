@@ -1,3 +1,15 @@
+---
+layout:     post
+title:      "NGINX系列之MAIN函数"
+subtitle:   ""
+date:       2018-03-20 12:00:00
+author:     "Tango"
+header-img: "img/in-post/post-2017-10-11/post-bg-universe.jpg"
+catalog: true
+tags:   
+    - nginx
+    - 系统架构
+---
 
 ### 核心数据结构
 
