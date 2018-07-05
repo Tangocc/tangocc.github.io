@@ -1,6 +1,6 @@
 ---
 layout:     post
-title:      "NGINX系列之内存池ngx_pool_t源码分析"
+title:      "NGINX系列之内存池"
 subtitle:   ""
 date:       2018-06-18 12:00:00
 author:     "Tango"

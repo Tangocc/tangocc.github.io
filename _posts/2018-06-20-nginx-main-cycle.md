@@ -4,16 +4,19 @@ title:      "NGINX系列之MAIN函数"
 subtitle:   ""
 date:       2018-03-20 12:00:00
 author:     "Tango"
-header-img: "img/in-post/post-2017-10-11/post-bg-universe.jpg"
+header-img: "img/post-bg-universe.jpg"
 catalog: true
 tags:   
     - nginx
     - 系统架构
 ---
 
+近期在系统学习Nginx相关源码，针对nginx进程模型、事件处理模型、配置以及扩展开发等诸多方面希望能够沉淀一些东西，故针对上述方面整理一系列博客，既然是源码分析，那就首先从main函数开始吧。
+
 ### 核心数据结构
 
-- 全局变量cycle数据结构
+- 全局变量cycle数据结构  
+`ngx_cycle_s `变量是nginx中贯穿始终的全局变量，其存储在系统运行过程中的所有信息，包括配置文件信息、模块信息、客户端连接、读写事件处理函数等信息。其结构如下所示： 
 
 ```
 struct ngx_cycle_s {
@@ -149,8 +152,12 @@ typedef struct {
     char               *(*init_conf)(ngx_cycle_t *cycle, void *conf);
 } ngx_core_module_t;
 
-
 ```
+### 主函数逻辑关系
+首先附图main函数调用关系，方便在源码分析过程中理清各个函数调用关系。如下：
+
+![]()
+
 
 ### 主函数 main()
 
@@ -402,19 +409,4 @@ ngx_int_t ngx_init_modules(ngx_cycle_t *cycle)
 }
 
 ```
-
-
-### `ngx_single_process_cycle `
-
-
-```
-
-
-```
-
-### `ngx_master_process_cycle `
-
-```
-
-
-```
+在完成模块创建和初始化工作后，系统进入`ngx_single_process_cycle `和`ngx_master_process_cycle `函数，创建主进程和工作进程，其具体的进程模型将在文章[NGINX系列之进程模型](https://tangocc.github.io/2018/03/20/nginx-process-model/)中介绍。
