@@ -4,7 +4,7 @@ title:      "总之岁月漫长，但却值得等待"
 subtitle:   ""
 date:       2017-10-07 12:00:00
 author:     "Tango"
-header-img: ""
+header-img: "img/post-bg-universe.jpg"
 ---
 
  

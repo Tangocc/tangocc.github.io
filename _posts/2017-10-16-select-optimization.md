@@ -4,7 +4,7 @@ title:      "MySql系列之查询优化"
 subtitle:   ""
 date:       2017-10-16 12:00:00
 author:     "Tango"
-header-img: "img/in-post/post-2017-10-11/post-bg-universe.jpg"
+header-img: "img/post-bg-universe.jpg"
 catalog: true
 tags:   
     - MySql数据库 

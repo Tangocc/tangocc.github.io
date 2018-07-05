@@ -4,7 +4,7 @@ title:      "前后端系统性能优化方案"
 subtitle:   ""
 date:       2017-12-19 12:00:00
 author:     "Tango"
-header-img: "img/in-post/post-2017-10-11/post-bg-universe.jpg"
+header-img: "img/post-bg-universe.jpg"
 catalog: true
 tags:   
     - 系统优化
