@@ -1,20 +1,132 @@
 ---
 layout:     post
-title:      "NGINX系列之内存池"
+title:      "NGINX系列之ngx_connection"
 subtitle:   ""
-date:       2018-06-18 12:00:00
+date:       2018-07-08 12:00:00
 author:     "Tango"
 header-img: "img/post-bg-universe.jpg"
 catalog: true
 tags:   
     - nginx
-    - 内存池
+    - 连接
+    - connection
 ---
 
+上文介绍nginx事件模型，当用户发起请求时候，为便于对连接进行管理，服务端将用户的请求封装为一种数据结构`ngx_connection_t`，从而方便维护客户端各种请求信息以及连接生命周期的管理。
 
 
+```
+struct ngx_connection_s {
+    void               *data;
+    ngx_event_t        *read;
+    ngx_event_t        *write;
 
+    ngx_socket_t        fd;
 
+    ngx_recv_pt         recv;
+    ngx_send_pt         send;
+    ngx_recv_chain_pt   recv_chain;
+    ngx_send_chain_pt   send_chain;
+
+    ngx_listening_t    *listening;
+
+    off_t               sent;
+
+    ngx_log_t          *log;
+
+    ngx_pool_t         *pool;
+
+    int                 type;
+
+    struct sockaddr    *sockaddr;
+    socklen_t           socklen;
+    ngx_str_t           addr_text;
+
+    ngx_str_t           proxy_protocol_addr;
+    in_port_t           proxy_protocol_port;
+
+#if (NGX_SSL || NGX_COMPAT)
+    ngx_ssl_connection_t  *ssl;
+#endif
+
+    struct sockaddr    *local_sockaddr;
+    socklen_t           local_socklen;
+
+    ngx_buf_t          *buffer;
+
+    ngx_queue_t         queue;
+
+    ngx_atomic_uint_t   number;
+
+    ngx_uint_t          requests;
+
+    unsigned            buffered:8;
+
+    unsigned            log_error:3;     /* ngx_connection_log_error_e */
+
+    unsigned            timedout:1;
+    unsigned            error:1;
+    unsigned            destroyed:1;
+
+    unsigned            idle:1;
+    unsigned            reusable:1;
+    unsigned            close:1;
+    unsigned            shared:1;
+
+    unsigned            sendfile:1;
+    unsigned            sndlowat:1;
+    unsigned            tcp_nodelay:2;   /* ngx_connection_tcp_nodelay_e */
+    unsigned            tcp_nopush:2;    /* ngx_connection_tcp_nopush_e */
+
+    unsigned            need_last_buf:1;
+
+#if (NGX_HAVE_AIO_SENDFILE || NGX_COMPAT)
+    unsigned            busy_count:2;
+#endif
+
+#if (NGX_THREADS || NGX_COMPAT)
+    ngx_thread_task_t  *sendfile_task;
+#endif
+};
+
+struct ngx_peer_connection_s {
+    ngx_connection_t                *connection;
+
+    struct sockaddr                 *sockaddr;
+    socklen_t                        socklen;
+    ngx_str_t                       *name;
+
+    ngx_uint_t                       tries;
+    ngx_msec_t                       start_time;
+
+    ngx_event_get_peer_pt            get;
+    ngx_event_free_peer_pt           free;
+    ngx_event_notify_peer_pt         notify;
+    void                            *data;
+
+#if (NGX_SSL || NGX_COMPAT)
+    ngx_event_set_peer_session_pt    set_session;
+    ngx_event_save_peer_session_pt   save_session;
+#endif
+
+    ngx_addr_t                      *local;
+
+    int                              type;
+    int                              rcvbuf;
+
+    ngx_log_t                       *log;
+
+    unsigned                         cached:1;
+    unsigned                         transparent:1;
+
+                                     /* ngx_connection_log_error_e */
+    unsigned                         log_error:2;
+
+    NGX_COMPAT_BEGIN(2)
+    NGX_COMPAT_END
+};
+
+```
 在nginx中connection就是对tcp连接的封装，其中包括连接的socket，读事件，写事件。利用nginx封装的connection，我们可以很方便的使用nginx来处理与连接相关的事情，比如，建立连接，发送与接受数据等。而nginx中的http请求的处理就是建立在connection之上的，所以nginx不仅可以作为一个web服务器，也可以作为邮件服务器。当然，利用nginx提供的connection，我们可以与任何后端服务打交道。
 
 结合一个tcp连接的生命周期，我们看看nginx是如何处理一个连接的。首先，nginx在启动时，会解析配置文件，得到需要监听的端口与ip地址，然后在nginx的master进程里面，先初始化好这个监控的socket(创建socket，设置addrreuse等选项，绑定到指定的ip地址端口，再listen)，然后再fork出多个子进程出来，然后子进程会竞争accept新的连接。此时，客户端就可以向nginx发起连接了。当客户端与服务端通过三次握手建立好一个连接后，nginx的某一个子进程会accept成功，得到这个建立好的连接的socket，然后创建nginx对连接的封装，即ngx_connection_t结构体。接着，设置读写事件处理函数并添加读写事件来与客户端进行数据的交换。最后，nginx或客户端来主动关掉连接，到此，一个连接就寿终正寝了。
