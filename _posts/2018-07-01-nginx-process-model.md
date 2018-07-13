@@ -9,6 +9,7 @@ catalog: true
 tags:   
     - nginx
     - 系统架构
+    - 进程模型
 ---
 
 在上一节中分析了nginx主流程，在`mian`函数中完成服务器的配置文件解析以及模块初始化工作后，根据系统设置进入单进程或者多进程模式，本文将分析nginx进程模型。
@@ -22,22 +23,21 @@ tags:
 - 多进程单线程
   单线程避免资源争夺的竞争以及上下文切换带来的损耗，多进程提高“机器”个数，提高系统的整体并发性。
 
-从上文中可知，nginx分为单进程模式和多进程模式，单进程模式常常在开发环境调试时候使用，在对外服务时nginx多以多进程方式工作。多进程工作方式中为方便进程的统一管理，系统中分为一个master进程和多个work进程，master进程主要负责信号处理以及work进程的管理，包括接收外界信号、向worker进程发送信号，监控worker进程的运行状态等，不直接对外提供web服务;worker进程则主要对外提供web服务，各个work进程之间相互隔离且相互平等，从而避免进程之间的竞争导致的性能损耗，worker进程上数目可以设置，一般设置为机器cpu核数(原因还是降低进程之间上下文切换带来的损耗)。其进程模型可以用下图表示：  
+从上文中可知，nginx分为单进程模式和多进程模式，单进程模式常常在开发环境调试时候使用，在对外服务时nginx多以多进程方式工作。多进程工作方式中为方便进程的统一管理，系统中分为一个master进程和多个work进程，master进程主要负责信号处理以及work进程的管理，包括接收外界信号、向worker进程发送信号，监控worker进程的运行状态等，不直接对外提供web服务;worker进程则主要对外提供web服务，各个work进程之间相互隔离且相互平等，从而避免进程之间的资源竞争导致的性能损耗，worker进程数目可以设置，一般设置为机器cpu核数(原因是降低进程之间上下文切换带来的损耗)。其进程模型可以用下图表示：  
 
 ![](/img/in-post/post-2018-07-03-nginx-process-model.png)
 
 ### 流程伪代码
 
-#### master进程 `ngx_master_process_cycle`
-
-   主进程启动以后首先初始化系统相应的信号量标志位，然后根据配置参数(子进程个数、最大连接数等)通过fork复制创建工作进程，子进程与master进程具有相同的环境，接下来主进程和工作进程进入不同的循环，主进程保存子进程返回的pid写入文件，接着主进程进入信号处理的循环，监听系统接收到的(例如nginx -reload)信号并进行相关的处理。
-master进程有如下几种信号：  
+#### master主进程
+   主进程启动以后首先初始化系统相应的信号量标志位，然后根据配置参数(子进程个数、最大连接数等)通过fork复制创建工作进程，worker进程与master进程具有相同的上下文环境，接下来主进程和工作进程进入不同的循环，主进程保存子进程返回的pid写入文件，接着主进程进入信号处理的循环，监听系统接收到的(例如nginx -reload)信号并进行相关的处理。
+master进程有如下几种信号:  
 
 - TERM INT 快速停止
 - QUIT 从容关闭
 - HUP 平滑重启
 
-流程伪代码如下：
+master进程流程伪代码如下：
 
 ```
 void ngx_master_process_cycle(ngx_cycle_t *cycle){
@@ -75,7 +75,7 @@ void ngx_master_process_cycle(ngx_cycle_t *cycle){
 ```
 
 #### worker工作进程
- 通过主进程fork复制出worker进程，worker进程环境变量(监听socket、文件描述符等)都一样，因此各个worker进程完成等同，在相同的socket端口监听，请求到来时，每个worker工作进程都会监听到，但最终只会有一个worker进程会接受并处理，（此处涉及到惊群现象,将在下篇文章介绍)。创建工作进程以后，工作进程进入循环，首先处理退出信号，然后进入事件处理过程ngx_process_events_and_timers(cycle)，在进程处理函数中，首先处理定时任务，然后处理读取任务再处理写任务。这里有三个小问题：  
+  通过主进程fork复制出worker进程，worker进程环境变量(监听socket、文件描述符等)都一样，因此各个worker进程完成等同，在相同的socket端口监听，请求到来时，每个worker工作进程都会监听到，但最终只会有一个worker进程会接受并处理，（此处涉及到惊群现象,将在下篇文章介绍)。创建工作进程以后，工作进程进入循环，首先处理退出信号，然后进入事件处理过程ngx_process_events_and_timers(cycle)，在进程处理函数中，首先处理定时任务，然后处理读取任务再处理写任务。这里有三个小问题：  
 
 - 为什么要采用这种处理顺序？
 - 定时任务是如何保证基本准确定时的?
@@ -128,8 +128,7 @@ static void ngx_worker_process_cycle(ngx_cycle_t *cycle, void *data)
 - 文件位置：/src/os/unix/ngx_process_cycle.c
 
 ```
-void ngx_master_process_cycle(ngx_cycle_t *cycle)
-{
+void ngx_master_process_cycle(ngx_cycle_t *cycle){
     char              *title;
     u_char            *p;
     size_t             size;
@@ -235,7 +234,7 @@ void ngx_master_process_cycle(ngx_cycle_t *cycle)
     }
 }
 ```
-#### `ngx_start_worker_processes`
+#### 启动worker进程`ngx_start_worker_processes`
 
 ```
 static void
@@ -250,12 +249,10 @@ ngx_start_worker_processes(ngx_cycle_t *cycle, ngx_int_t n, ngx_int_t type)
     }
 }
 ```
-#### `ngx_start_cache_manager_processes `
+#### 启动缓存进程`ngx_start_cache_manager_processes `
 
 ```
-static void
-ngx_start_cache_manager_processes(ngx_cycle_t *cycle, ngx_uint_t respawn)
-{
+static void ngx_start_cache_manager_processes(ngx_cycle_t *cycle, ngx_uint_t respawn){
     ngx_uint_t       i, manager, loader;
     ngx_path_t     **path;
     ngx_channel_t    ch;
@@ -290,12 +287,10 @@ ngx_start_cache_manager_processes(ngx_cycle_t *cycle, ngx_uint_t respawn)
 
 ```
 
-#### `ngx_single_process_cycle`
+#### 单进程`ngx_single_process_cycle`
 
 ```
-
-void ngx_single_process_cycle(ngx_cycle_t *cycle)
-{
+void ngx_single_process_cycle(ngx_cycle_t *cycle){
     ngx_uint_t  i;
 
     ngx_set_environment(cycle, NULL) 
@@ -343,7 +338,7 @@ void ngx_single_process_cycle(ngx_cycle_t *cycle)
 
 ```
 
-#### `ngx_worker_process_cycle `
+#### 工作进程循环`ngx_worker_process_cycle `
 ```
 static void ngx_worker_process_cycle(ngx_cycle_t *cycle, void *data)
 {
@@ -387,7 +382,7 @@ static void ngx_worker_process_cycle(ngx_cycle_t *cycle, void *data)
 
 
 ```
-#### `ngx_spawn_process `
+#### master进程fork子进程`ngx_spawn_process `
 
 ```
 ngx_pid_t ngx_spawn_process(ngx_cycle_t *cycle, ngx_spawn_proc_pt proc, void *data,char *name, ngx_int_t respawn)
