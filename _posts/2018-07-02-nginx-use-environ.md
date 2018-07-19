@@ -1,6 +1,6 @@
 ---
 layout:     post
-title:      "NGINX系列之进程模型"
+title:      "NGINX系列之应用场景"
 subtitle:   ""
 date:       2018-03-20 12:00:00
 author:     "Tango"

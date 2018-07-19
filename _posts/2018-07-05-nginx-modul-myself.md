@@ -1,6 +1,6 @@
 ---
 layout:     post
-title:      "NGINX系列之进程模型"
+title:      "NGINX系列之扩展开发"
 subtitle:   ""
 date:       2018-03-20 12:00:00
 author:     "Tango"
@@ -9,5 +9,4 @@ catalog: true
 tags:   
     - nginx
     - 系统架构
-    - 进程模型
 ---
