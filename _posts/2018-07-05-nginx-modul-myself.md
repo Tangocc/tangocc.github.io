@@ -11,49 +11,36 @@ tags:
     - 系统架构
 ---
 
-上文介绍nginx请求11个阶段处理，本文将动手实操开发并注册一个HTTP模块。
-实现功能：增加响应头``
+上文介绍nginx请求11个阶段处理，本文将动手实操开发并注册一个HTTP模块，在实现`ngx_http_hello_world_module `模块的过程中，详细介绍其实现步骤。
 
 ## 模块组成介绍
-
-
-
+### 模块功能
+功能相对简单，从`Hello World`开始，通过实现扩展HTTP模块`ngx_http_hello_world_module `，实现在响应头中增加一个字段`X-Hello-World:Tango`功能。
+### 模块开发步骤
+1.编写模块基本结构。包括模块的定义，模块上下文结构，模块的配置结构等。
+2.实现handler的挂载函数，根据模块的需求选择正确的挂载方式。
+3.编写模块核心功能实现函数handler处理函数。
+4.编写编译的文件config
+5.将实现的模块添加到nginx
+6.修改配置文件，验证可行性。
 
 ```
-
 #include <ngx_config.h>
 #include <ngx_core.h>
 #include <ngx_http.h>
 
-
-
 static ngx_int_t ngx_http_hello_world_handler(ngx_http_request_t *r);
 static ngx_int_t ngx_http_hello_world_init(ngx_conf_t *cf);
-
 
 
 static ngx_int_t ngx_http_hello_world_handler(ngx_http_request_t *r)
 {
 
 	printf("%s\n", "-------ngx_http_hello_world_handler--------");
-	  ngx_int_t rc = ngx_http_discard_request_body(r);
+	ngx_int_t rc = ngx_http_discard_request_body(r);
     if (rc != NGX_OK) {
         return rc;
     }
-    // size_t                          n;
-    // uint32_t                        hash;
-    // ngx_str_t                       key;
-    // ngx_uint_t                      i;
-    // ngx_slab_pool_t                *shpool;
-    // ngx_rbtree_node_t              *node;
-    // ngx_pool_cleanup_t             *cln;
-    // ngx_http_limit_conn_ctx_t      *ctx;
-    // ngx_http_limit_conn_node_t     *lc;
-    // ngx_http_limit_conn_conf_t     *lccf;
-    // ngx_http_limit_conn_limit_t    *limits;
-    // ngx_http_limit_conn_cleanup_t  *lccln;
-     ngx_table_elt_t  *h;
-
     h = ngx_list_push(&r->headers_out.headers );
     if(h == NULL){
     	return NGX_ERROR;
@@ -62,7 +49,6 @@ static ngx_int_t ngx_http_hello_world_handler(ngx_http_request_t *r)
     ngx_str_set(&h->value,"Tango");
     h->hash = 1;
   
-   
     return NG_DECLINED;
 }
 
@@ -72,7 +58,7 @@ static ngx_int_t ngx_http_hello_world_init(ngx_conf_t *cf){
     ngx_http_handler_pt        *h;
 	ngx_http_core_main_conf_t  *cmcf;
 
-	cmcf = ngx_http_conf_get_module_main_conf(cf, ngx_http_core_module);
+	cmcf = ngx_http_conf_get_module_main_conf(cf,ngx_http_core_module);
 
 	h = ngx_array_push(&cmcf->phases[NGX_HTTP_CONTENT_PHASE].handlers);
 	if (h == NULL) {
