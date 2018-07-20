@@ -24,6 +24,11 @@ tags:
 5.将实现的模块添加到nginx
 6.修改配置文件，验证可行性。
 
+
+### 模块开发
+
+
+
 ```
 #include <ngx_config.h>
 #include <ngx_core.h>
@@ -31,7 +36,6 @@ tags:
 
 static ngx_int_t ngx_http_hello_world_handler(ngx_http_request_t *r);
 static ngx_int_t ngx_http_hello_world_init(ngx_conf_t *cf);
-
 
 static ngx_int_t ngx_http_hello_world_handler(ngx_http_request_t *r)
 {
