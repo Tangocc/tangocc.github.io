@@ -2,7 +2,7 @@
 layout:     post
 title:      "NGINX系列之HTTP模块开发"
 subtitle:   ""
-date:       2018-03-20 12:00:00
+date:       2018-07-05 12:00:00
 author:     "Tango"
 header-img: "img/post-bg-universe.jpg"
 catalog: true
@@ -48,13 +48,13 @@ struct ngx_command_s {
 
 ```
 
-- name
-> 配置指令的名称
+- name  
+ 配置指令的名称
 
-- type
->配置指令的类型。
->nginx提供了很多预定义的属性值（一些宏定义），通过逻辑或运算符可组合在一起，形成对这个配置指令的详细的说明。  
->下面列出可在这里使用的预定义属性值及说明。  
+- type  
+配置指令的类型。  
+nginx提供了很多预定义的属性值（一些宏定义），通过逻辑或运算符可组合在一起，形成对这个配置指令的详细的说明。  
+下面列出可在这里使用的预定义属性值及说明。  
 `NGX_CONF_NOARGS`：配置指令不接受任何参数。  
 `NGX_CONF_TAKE1`：配置指令接受1个参数。  
 `NGX_CONF_TAKE2`：配置指令接受2个参数。  
@@ -63,10 +63,10 @@ struct ngx_command_s {
 `NGX_CONF_TAKE5`：配置指令接受5个参数。  
 `NGX_CONF_TAKE6`：配置指令接受6个参数。  
 `NGX_CONF_TAKE7`：配置指令接受7个参数。  
->
->可以组合多个属性，比如一个指令即可以不填参数，也可以接受1个或者2个参数。那么就是 `NGX_CONF_NOARGS | NGX_CONF_TAKE1 |NGX_CONF_TAKE2`。如果写上面三个属性在一起，你觉得麻烦，那么没有关系，nginx提供了一些定义，使用起来更简洁。
->
->`NGX_CONF_TAKE12`：配置指令接受1个或者2个参数。
+
+可以组合多个属性，比如一个指令即可以不填参数，也可以接受1个或者2个参数。那么就是 `NGX_CONF_NOARGS | NGX_CONF_TAKE1 |NGX_CONF_TAKE2`。如果写上面三个属性在一起，你觉得麻烦，那么没有关系，nginx提供了一些定义，使用起来更简洁。
+
+`NGX_CONF_TAKE12`：配置指令接受1个或者2个参数。
 `NGX_CONF_TAKE13`：配置指令接受1个或者3个参数。
 `NGX_CONF_TAKE23`：配置指令接受2个或者3个参数。
 `NGX_CONF_TAKE123`：配置指令接受1个或者2个或者3参数。
@@ -75,20 +75,20 @@ struct ngx_command_s {
 `NGX_CONF_2MORE`：配置指令接受至少两个参数。
 `NGX_CONF_MULTI`: 配置指令可以接受多个参数，即个数不定。
 `NGX_CONF_BLOCK`：配置指令可以接受的值是一个配置信息块。也就是一对大括号括起来的内容。里面可以再包括很多的配置指令。比如常见的server指令就是这个属性的。
->
->`NGX_CONF_FLAG`：配置指令可以接受的值是”on”或者”off”，最终会被转成bool值。
+
+`NGX_CONF_FLAG`：配置指令可以接受的值是”on”或者”off”，最终会被转成bool值。
 `NGX_CONF_ANY`：配置指令可以接受的任意的参数值。一个或者多个，或者”on”或者”off”，或者是配置块。
->
->最后要说明的是，无论如何，nginx的配置指令的参数个数不可以超过NGX_CONF_MAX_ARGS个。目前这个值被定义为8，也就是不能超过8个参数值。
->
->下面介绍一组说明配置指令可以出现的位置的属性。
->
->`NGX_DIRECT_CONF`：可以出现在配置文件中最外层。例如已经提供的配置指令daemon，master_process等。
+
+最后要说明的是，无论如何，nginx的配置指令的参数个数不可以超过NGX_CONF_MAX_ARGS个。目前这个值被定义为8，也就是不能超过8个参数值。
+
+下面介绍一组说明配置指令可以出现的位置的属性。
+
+`NGX_DIRECT_CONF`：可以出现在配置文件中最外层。例如已经提供的配置指令daemon，master_process等。
 `NGX_MAIN_CONF`: http、mail、events、error_log等。
 `NGX_ANY_CONF`: 该配置指令可以出现在任意配置级别上。
 对于我们编写的大多数模块而言，都是在处理http相关的事情，也就是所谓的都是NGX_HTTP_MODULE，对于这样类型的模块，其配置可能出现的位置也是分为直接出现在http里面，以及其他位置。
->
->`NGX_HTTP_MAIN_CONF`: 可以直接出现在http配置指令里。  
+
+`NGX_HTTP_MAIN_CONF`: 可以直接出现在http配置指令里。  
 `NGX_HTTP_SRV_CONF`: 可以出现在http里面的server配置指令里。  
 `NGX_HTTP_LOC_CONF`: 可以出现在http server块里面的location配置指令里。  
 `NGX_HTTP_UPS_CONF`: 可以出现在http里面的upstream配置指令里。  
@@ -96,21 +96,21 @@ struct ngx_command_s {
 `NGX_HTTP_LMT_CONF`: 可以出现在http里面的limit_except指令的block中。  
 `NGX_HTTP_LIF_CONF`: 可以出现在http server块里面的location配置指令里的if语句所在的block中。
 
-- set
-> 命令参数函数指针。当nginx在解析配置的时候，如果遇到这个配置指令，将会把读取到的值传递给这个函数进行分解处理。
-> 先看该函数的返回值，处理成功时，返回NGX_OK，否则返回NGX_CONF_ERROR或者是一个自定义的错误信息的字符串。
->
->再看一下这个函数被调用的时候，传入的三个参数。
+- set  
+命令参数函数指针。当nginx在解析配置的时候，如果遇到这个配置指令，将会把读取到的值传递给这个函数进行分解处理。
+先看该函数的返回值，处理成功时，返回NGX_OK，否则返回NGX_CONF_ERROR或者是一个自定义的错误信息的字符串。
 
->`cf`: 该参数里面保存从配置文件读取到的原始字符串以及相关的一些信息。特别注意的是这个参数的args字段是一个ngx_str_t类型的数组，该数组的首个元素是这个配置指令本身，第二个元素是指令的第一个参数，第三个元素是第二个参数，依次类推。  
+再看一下这个函数被调用的时候，传入的三个参数。
+
+`cf`: 该参数里面保存从配置文件读取到的原始字符串以及相关的一些信息。特别注意的是这个参数的args字段是一个ngx_str_t类型的数组，该数组的首个元素是这个配置指令本身，第二个元素是指令的第一个参数，第三个元素是第二个参数，依次类推。  
   
->`cmd`: 这个配置指令对应的ngx_command_t结构。  
+`cmd`: 这个配置指令对应的ngx_command_t结构。  
 
->`conf`: 就是定义的存储这个配置值的结构体，自定义。例如下面定义的结构体`ngx_http_hello_world_header_loc_conf_t `,用户在处理的时候可以使用类型转换，转换成自己知道的类型，再进行字段的赋值。  
+`conf`: 就是定义的存储这个配置值的结构体，自定义。例如下面定义的结构体`ngx_http_hello_world_header_loc_conf_t `,用户在处理的时候可以使用类型转换，转换成自己知道的类型，再进行字段的赋值。  
   
->为了更加方便的实现对配置指令参数的读取，nginx已经默认提供了对一些标准类型的参数进行读取的函数，可以直接赋值给set字段使用。下面来看一下这些已经实现的set类型函数。
+为了更加方便的实现对配置指令参数的读取，nginx已经默认提供了对一些标准类型的参数进行读取的函数，可以直接赋值给set字段使用。下面来看一下这些已经实现的set类型函数。
 
->`ngx_conf_set_flag_slot`： 读取NGX_CONF_FLAG类型的参数。
+`ngx_conf_set_flag_slot`： 读取NGX_CONF_FLAG类型的参数。
 `ngx_conf_set_str_slot`:读取字符串类型的参数。
 `ngx_conf_set_str_array_slot`: 读取字符串数组类型的参数。
 `ngx_conf_set_keyval_slot`： 读取键值对类型的参数。
@@ -125,15 +125,15 @@ struct ngx_command_s {
 
 - conf  
 
-> 该字段被NGX_HTTP_MODULE类型模块所用 (我们编写的基本上都是NGX_HTTP_MOUDLE，只有一些nginx核心模块是非NGX_HTTP_MODULE)，该字段指定当前配置项存储的内存位置。实际上是使用哪个内存池的问题。    
+该字段被NGX_HTTP_MODULE类型模块所用 (我们编写的基本上都是NGX_HTTP_MOUDLE，只有一些nginx核心模块是非NGX_HTTP_MODULE)，该字段指定当前配置项存储的内存位置。实际上是使用哪个内存池的问题。    
 
->因为http模块对所有http模块所要保存的配置信息，划分了main, server和location三个地方进行存储，每个地方都有一个内存池用来分配存储这些信息的内存。
+因为http模块对所有http模块所要保存的配置信息，划分了main, server和location三个地方进行存储，每个地方都有一个内存池用来分配存储这些信息的内存。
   
->这里可能的值为 `NGX_HTTP_MAIN_CONF_OFFSET`、`NGX_HTTP_SRV_CONF_OFFSET`或`NGX_HTTP_LOC_CONF_OFFSET`。当然也可以直接置为0，就是NGX_HTTP_MAIN_CONF_OFFSET。
+这里可能的值为 `NGX_HTTP_MAIN_CONF_OFFSET`、`NGX_HTTP_SRV_CONF_OFFSET`或`NGX_HTTP_LOC_CONF_OFFSET`。当然也可以直接置为0，就是NGX_HTTP_MAIN_CONF_OFFSET。
 
 - post
 
->该字段存储一个指针。可以指向任何一个在读取配置过程中需要的数据，以便于进行配置读取的处理。大多数时候，都不需要，所以简单地设为0即可。
+该字段存储一个指针。可以指向任何一个在读取配置过程中需要的数据，以便于进行配置读取的处理。大多数时候，都不需要，所以简单地设为0即可。
 
 根据上面的介绍，我们定义自己的命令结构如下：
 
@@ -192,28 +192,28 @@ typedef struct  {
 
 ```
 - preconfiguration
-> 在创建和读取该模块的配置信息之前被调用。
+ 在创建和读取该模块的配置信息之前被调用。
 
 - postconfiguration
-> 在创建和读取该模块的配置信息之后被调用。
+ 在创建和读取该模块的配置信息之后被调用。
 
 - create_main_conf
-> 调用该函数创建本模块位于http block的配置信息存储结构。该函数成功的时候，返回创建的配置对象。失败的话，返回NULL。
+ 调用该函数创建本模块位于http block的配置信息存储结构。该函数成功的时候，返回创建的配置对象。失败的话，返回NULL。
 
 - init_main_conf
-> 调用该函数初始化本模块位于http block的配置信息存储结构。该函数成功的时候，返回NGX_CONF_OK。失败的话，返回NGX_CONF_ERROR或错误字符串。
+ 调用该函数初始化本模块位于http block的配置信息存储结构。该函数成功的时候，返回NGX_CONF_OK。失败的话，返回NGX_CONF_ERROR或错误字符串。
 
 - create_srv_conf:
-> 调用该函数创建本模块位于http server block的配置信息存储结构，每个server block会创建一个。该函数成功的时候，返回创建的配置对象。失败的话，返回NULL。
+ 调用该函数创建本模块位于http server block的配置信息存储结构，每个server block会创建一个。该函数成功的时候，返回创建的配置对象。失败的话，返回NULL。
 
 - merge_srv_conf:	
-> 因为有些配置指令既可以出现在http block，也可以出现在http server block中。那么遇到这种情况，每个server都会有自己存储结构来存储该server的配置，但是在这种情况下http block中的配置与server block中的配置信息发生冲突的时候，就需要调用此函数进行合并，该函数并非必须提供，当预计到绝对不会发生需要合并的情况的时候，就无需提供。当然为了安全起见还是建议提供。该函数执行成功的时候，返回NGX_CONF_OK。失败的话，返回NGX_CONF_ERROR或错误字符串。
+ 因为有些配置指令既可以出现在http block，也可以出现在http server block中。那么遇到这种情况，每个server都会有自己存储结构来存储该server的配置，但是在这种情况下http block中的配置与server block中的配置信息发生冲突的时候，就需要调用此函数进行合并，该函数并非必须提供，当预计到绝对不会发生需要合并的情况的时候，就无需提供。当然为了安全起见还是建议提供。该函数执行成功的时候，返回NGX_CONF_OK。失败的话，返回NGX_CONF_ERROR或错误字符串。
 
 - create_loc_conf:
-> 调用该函数创建本模块位于location block的配置信息存储结构。每个在配置中指明的location创建一个。该函数执行成功，返回创建的配置对象。失败的话，返回NULL。
+ 调用该函数创建本模块位于location block的配置信息存储结构。每个在配置中指明的location创建一个。该函数执行成功，返回创建的配置对象。失败的话，返回NULL。
 
 - merge_loc_conf:	
-> 与merge_srv_conf类似，这个也是进行配置值合并的地方。该函数成功的时候，返回NGX_CONF_OK。失败的话，返回NGX_CONF_ERROR或错误字符串。
+ 与merge_srv_conf类似，这个也是进行配置值合并的地方。该函数成功的时候，返回NGX_CONF_OK。失败的话，返回NGX_CONF_ERROR或错误字符串。
 
 Nginx里面的配置信息都是上下一层层的嵌套的，对于具体某个location的话，对于同一个配置，如果当前层次没有定义，那么就使用上层的配置，否则使用当前层次的配置。
 
@@ -648,4 +648,4 @@ Commercial support is available at
 
 至此，完成一个HTTP模块开发。
 
-参考文章 [handler模块(100%)](http://tengine.taobao.org/book/chapter_03.html)
+**参考文章** [handler模块(100%)](http://tengine.taobao.org/book/chapter_03.html)
