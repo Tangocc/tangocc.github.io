@@ -16,12 +16,12 @@ tags:
 ## 模块组成介绍
 ### 模块定义
 - 模块名称
-> `ngx_http_hello_world_module`
+ `ngx_http_hello_world_module`
 
 - 模块功能
-> 功能相对简单，从`Hello World`开始，通过实现扩展HTTP模块`ngx_http_hello_world_module `，实现在响应头中增加一个字段`X-Hello-World:XXX`功能。
+ 功能相对简单，从`Hello World`开始，通过实现扩展HTTP模块`ngx_http_hello_world_module `，实现在响应头中增加一个字段`X-Hello-World:XXX`功能。
 - 模块使用
-> 修改nginx.conf文件，在location块中添加命令 `X-Hello-World ` 其中`X-Hello-World`是命令，`XXX`是值。
+ 修改nginx.conf文件，在location块中添加命令 `X-Hello-World ` 其中`X-Hello-World`是命令，`XXX`是值。
 
 
 ### 模块开发步骤
