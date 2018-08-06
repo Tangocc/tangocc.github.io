@@ -17,12 +17,12 @@ tags:
 ## 模块组成介绍
 ### 模块定义
 - 模块名称
-> `ngx_http_hello_world_module`
+ `ngx_http_hello_world_module`
 
 - 模块功能
-> 功能相对简单，从`Hello World`开始，通过实现扩展HTTP模块`ngx_http_hello_world_module `，实现在响应头中增加一个字段`X-Hello-World:XXX`功能。
+ 功能相对简单，从`Hello World`开始，通过实现扩展HTTP模块`ngx_http_hello_world_module `，实现在响应头中增加一个字段`X-Hello-World:XXX`功能。
 - 模块使用
-> 修改nginx.conf文件，在location块中添加命令 `X-Hello-World ` 其中`X-Hello-World`是命令，`XXX`是值。
+ 修改nginx.conf文件，在location块中添加命令 `X-Hello-World ` 其中`X-Hello-World`是命令，`XXX`是值。
 
 
 ### 模块开发步骤
@@ -406,7 +406,7 @@ static char * ngx_http_hello_world_set(ngx_conf_t *cf, ngx_command_t *cmd, void 
 #include <ngx_http.h>
 
 static ngx_int_t ngx_http_hello_world_handler(ngx_http_request_t *r);
-static ngx_int_t ngx_http_hello_world_init(ngx_conf_t *cf);
+
 ngx_module_t  ngx_http_hello_world_module;
 
 typedef struct {
@@ -421,6 +421,7 @@ static ngx_int_t ngx_http_hello_world_handler(ngx_http_request_t *r){
   
   ngx_http_hello_world_header_loc_conf_t* local_conf;
   ngx_table_elt_t  *h;
+  //ngx_pool_t *p;
 
   local_conf = ngx_http_get_module_loc_conf(r,ngx_http_hello_world_module);
   ngx_str_t header_value = local_conf->header_value;
@@ -435,28 +436,11 @@ static ngx_int_t ngx_http_hello_world_handler(ngx_http_request_t *r){
     	return NGX_ERROR;
   }
   ngx_str_set(&h->key,"X-Hello-World");
-  ngx_str_set(&h->value,header_value.data);
+  h->value.len = header_value.len;
+  h->value.data = header_value.data;
   h->hash = 1;
   
   return NGX_DECLINED;
-}
-
-
-static ngx_int_t ngx_http_hello_world_init(ngx_conf_t *cf){
-	
-  printf("---------ngx_http_hello_world_init--------");
-  ngx_http_handler_pt        *h;
-	ngx_http_core_main_conf_t  *cmcf;
-
-	cmcf = ngx_http_conf_get_module_main_conf(cf,ngx_http_core_module);
-	h = ngx_array_push(&cmcf->phases[NGX_HTTP_CONTENT_PHASE].handlers);
-	if (h == NULL) {
-	    return NGX_ERROR;
-	}
-	*h = ngx_http_hello_world_handler;
-
-	return NGX_OK;
-
 }
 
 static void *ngx_http_hello_world_create_loc_conf(ngx_conf_t *cf){
@@ -478,6 +462,13 @@ static char* ngx_http_hello_world_set(ngx_conf_t *cf, ngx_command_t *cmd, void *
    //ngx_http_hello_world_header_loc_conf_t* local_conf;
    //local_conf = conf;
    char* rv = ngx_conf_set_str_slot(cf, cmd, conf);
+
+    ngx_http_core_loc_conf_t  *clcf;
+
+     clcf = ngx_http_conf_get_module_loc_conf(cf, ngx_http_core_module);
+     clcf->handler =ngx_http_hello_world_handler;
+
+     return NGX_CONF_OK;
    return rv;
 
 }
@@ -496,7 +487,7 @@ static ngx_command_t  ngx_http_hello_world_commands[] = {
 
 static ngx_http_module_t  ngx_http_hello_world_module_ctx = {
   NULL,                                  /* preconfiguration */
-  ngx_http_hello_world_init,             /* postconfiguration */
+  NULL,             /* postconfiguration */
   NULL,                                  /* create main configuration */
   NULL,                                  /* init main configuration */
   NULL,                                  /* create server configuration */
@@ -519,6 +510,7 @@ ngx_module_t  ngx_http_hello_world_module = {
     NULL,                                  /* exit master */
     NGX_MODULE_V1_PADDING
 };
+
 
 ```
 
