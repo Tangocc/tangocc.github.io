@@ -9,6 +9,7 @@ catalog: true
 tags:   
     - nginx
     - 系统架构
+    - Http模块
 ---
 
 **上文介绍nginx请求11个阶段处理，本文将动手实操开发并注册一个HTTP模块，在实现`ngx_http_hello_world_module `模块的过程中，详细介绍其实现步骤。**
