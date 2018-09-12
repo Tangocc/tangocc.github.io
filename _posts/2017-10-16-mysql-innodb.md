@@ -49,13 +49,8 @@ innodb数据逻辑存储形式为表空间，表空间→由段、区、页组�
 
 区则是由连续页组成，每个区的大小为1M，页的大小为16KB，即一个区中一共有64个连续的页。
 
-
-### 直击灵魂的拷问
-
-#### WAL
-#### 插入缓冲
-#### redo、undo、binlog日志
-#### double write
+### 语句的执行流程
+![](/img/in-post/mysql/post-innnodb-stream.png)
 
 
 
