@@ -11,7 +11,7 @@ tags:
     - 系统架构
 ---
 
-ElasticSearch是一个基于Lucene的搜索服务器。它提供了一个分布式多用户能力的全文搜索引擎，基于RESTful web接口。
+ElasticSearch是一个基于Lucence的搜索服务器。它提供了一个分布式多用户能力的全文搜索引擎，基于RESTful web接口。
 ##ES核心概念
 ###系统概念
 ####节点node
@@ -22,6 +22,32 @@ ElasticSearch是一个基于Lucene的搜索服务器。它提供了一个分布�
 代表索引分片，es可以把一个完整的索引分成多个分片，这样的好处是可以把一个大的索引拆分成多个，分布到不同的节点上。构成分布式搜索。分片的数量只能在索引创建前指定，并且索引创建后不能更改。
 ####副本replicas
 代表索引副本，es可以设置多个索引的副本，副本的作用一是提高系统的容错性，当某个节点某个分片损坏或丢失时可以从副本中恢复。二是提高es的查询效率，es会自动对搜索请求进行负载均衡。
+
+上述关系可以表示为如下关系:集群-节点-索引-分片-副本依次包含。
+
+```
+{  
+  "cluster": {  
+    "node": {  
+      "index0": {  
+        "shard0": {
+          "replicas0": 0,
+          "replicas1": 1
+        },
+        "shard1": {
+          "replicas0": 0,
+          "replicas1": 1
+        },
+        "shard2": {
+          "replicas0": 0,
+          "replicas1": 1
+        }
+      }
+    }
+  }
+}
+```
+
 ###数据概念
 
 |ES|mysql|备注|  
@@ -30,9 +56,98 @@ ElasticSearch是一个基于Lucene的搜索服务器。它提供了一个分布�
 |类型Type|数据表||  
 |文档Document|记录||  
 
+### ES物理文件结构
 
+```
+└── nodes
+    └── 0
+        ├── indices
+        │   └── user
+        │       ├── 0
+        │       │   ├── index
+        │       │   │   ├── segments_2
+        │       │   │   ├── segments.gen
+        │       │   │   └── write.lock
+        │       │   ├── _state
+        │       │   │   └── state-0.st
+        │       │   └── translog
+        │       │       └── translog-1536809664493
+        │       ├── 1
+        │       │   ├── index
+        │       │   │   ├── segments_2
+        │       │   │   ├── segments.gen
+        │       │   │   └── write.lock
+        │       │   ├── _state
+        │       │   │   └── state-0.st
+        │       │   └── translog
+        │       │       └── translog-1536809664502
+        │       ├── 2
+        │       │   ├── index
+        │       │   │   ├── _0.cfe
+        │       │   │   ├── _0.cfs
+        │       │   │   ├── _0.si
+        │       │   │   ├── segments_3
+        │       │   │   ├── segments.gen
+        │       │   │   └── write.lock
+        │       │   ├── _state
+        │       │   │   └── state-0.st
+        │       │   └── translog
+        │       │       └── translog-1536809664503
+        │       ├── 3
+        │       │   ├── index
+        │       │   │   ├── _1.cfe
+        │       │   │   ├── _1.cfs
+        │       │   │   ├── _1.si
+        │       │   │   ├── segments_4
+        │       │   │   ├── segments.gen
+        │       │   │   └── write.lock
+        │       │   ├── _state
+        │       │   │   └── state-0.st
+        │       │   └── translog
+        │       │       └── translog-1536809664503
+        │       ├── 4
+        │       │   ├── index
+        │       │   │   ├── _2.cfe
+        │       │   │   ├── _2.cfs
+        │       │   │   ├── _2.si
+        │       │   │   ├── segments_4
+        │       │   │   ├── segments.gen
+        │       │   │   └── write.lock
+        │       │   ├── _state
+        │       │   │   └── state-0.st
+        │       │   └── translog
+        │       │       └── translog-1536809664598
+        │       └── _state
+        │           └── state-1.st
+        ├── node.lock
+        └── _state
+            └── global-3.st
+```
 ##ES系统架构
+![](/img/in-post/post-inpost-es.png)
+如图描述三个节点组成一个集群，每个节点保有三个索引。每个索引分片数为3，每个分片副本数为1.  
+说明：  
+1.ES集群是去中心化结构，即无主节点，各个节点地位平等，都可以对外服务。图中描述NODE0节点为master节点，其实际含义更像是是协调者：维护整个集群的节点状态以及元数据的更新。  
+2.replicas一般是分配到与shard不同的节点上，以保证数据的可靠性，图中为描述方便，将replicas与shards定义到同一个节点。  
+3.shard命名: shards01表示index0的分片1，shards00即是index0的分片0.  
 
+客户端发送查询请求`CURL -XGET  es-search-dns.com/index0/type/_search?query=xxx`，其执行过程分为两步：  
+
+- query阶段。  
+
+>1.集群中各个节点维护索引分片存储的节点位置，假设客户端请求到NODE1节点，NODE0节点根据自身维护的索引-分片位置关系，将该请求广播到index0几点各个分片中去(图中即NODE0、NODE2)  
+2.每个shard是一个完成的Lucene搜索引擎，shards会在本地执行查询请求后会生成一个命中文档的优先级队列。  
+3，每个shard返回docId和所有参与排序字段的值例如_score到优先级队列里面  
+4.shard将查询的结果返回给NODE1节点，NODE1节点将每个shards返回的数据合并到全局的排序列表。  
+5.进入fetch阶段。  
+
+- fetch阶段。
+  
+>1.fetch阶段获取到符合该搜索条件的docID,因此需要获取到完成的document记录。  
+>2.NODE1节点标识了那些document需要被拉取出来，并发送一个批量的mutil get请求到相关的shard上。  
+>3.每个shard加载相关document，如果需要他们将会被返回到NODE1节点上  
+>4.NODE1节点拉取所有需要的document后，则将数据返回给客户端。  
+>5.至此，完成依次查询请求。  
 
 ## ES索引存储原理
 ###不变性
