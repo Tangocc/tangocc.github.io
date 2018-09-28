@@ -1,6 +1,6 @@
 ---
 layout:     post
-title:      "漫话ZooKeeper"
+title:      "Zookeeper系列之漫话ZooKeeper"
 subtitle:   ""
 date:       2018-09-19 12:00:00
 author:     "Tango"
