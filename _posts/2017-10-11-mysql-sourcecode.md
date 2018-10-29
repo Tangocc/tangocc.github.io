@@ -7,7 +7,8 @@ author:     "Tango"
 header-img: "img/post-bg-universe.jpg"
 catalog: true
 tags:   
-    - MySql数据库 
+    - MySql
+    - 数据库 
 ---
 
 
