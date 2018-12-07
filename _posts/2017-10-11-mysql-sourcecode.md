@@ -12,13 +12,14 @@ tags:
 ---
 
 
->源码才是王道。  
+> 源码才是王道。  
 >
 
 ### 1.MySQL源码
 
 ---
 #### **1. 主函数sql/mysqld.cc中，代码如下：**
+
 ```
 //标准入口函数
 int main(int argc, char **argv) 
