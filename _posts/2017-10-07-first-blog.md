@@ -11,7 +11,6 @@ header-img: "img/post-bg-universe.jpg"
 
 >人生就是一层层雾，拨开一层又见一层
 
->第一篇博客
 
 >开启新世界
 
