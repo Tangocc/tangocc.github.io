@@ -1,13 +1,13 @@
 ---
 layout:     post
-title:      "Device Map文件系统修改容器大小"
+title:      "Device Map文件系统修改docker容器磁盘大小"
 subtitle:   ""
 date:       2019-03-19 12:00:00
 author:     "Tango"
 header-img: "img/post-bg-universe.jpg"
 catalog: true
 tags:   
-    - zookeeper
+    - docker
 ---
  最近在运维docker集群时，多次出现容器磁盘空间(/home)目录使用率过高问题，定位过程中发现/home目录默认限制是10G，显然无法满足线上的环境要求，因此需要在不停服条件下对容器/home磁盘空间进行扩容。
 
