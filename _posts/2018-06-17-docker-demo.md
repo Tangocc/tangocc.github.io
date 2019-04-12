@@ -177,3 +177,10 @@ This is first docker.
 - 宿主机器与docker之间复制文件
 
 > docker cp host_path containerID:container_path
+ 
+> docker events
+
+> docker logs
+> 
+> docker inspect
+> 
