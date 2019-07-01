@@ -88,10 +88,10 @@ service-worker: true
 friends: [
     {
             title: "Phone :13717503610",
-        href: ""
+            href: "https://tangocc.github.io/"
     },
     {
-            title:"Email: neuqtanglu@163.com",
-            href:""
+            title: "Email: neuqtanglu@163.com",
+            href:"https://tangocc.github.io/"
     }
 ]
