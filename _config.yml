@@ -51,7 +51,7 @@ kramdown:
 disqus_username: tango
 
 # Netease setttings
-netease_comment: false
+netease_comment: true
 
 
 
@@ -87,7 +87,11 @@ service-worker: true
 # Friends
 friends: [
     {
-        title: "",
+            title: "Phone :13717503610",
         href: ""
+    },
+    {
+            title:"Email: neuqtanglu@163.com",
+            href:""
     }
 ]
