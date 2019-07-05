@@ -23,17 +23,26 @@ tags:
 
 - **2015.09 - 2018.06　　　东南大学(985)　　　　硕士研究生**  
 - **2011.09 - 2015.06　　　东北大学(985)　　　　学士学位**  　　　　　　　　　
+
 -------------------
 
 ## 软件技能
-- go/php/Jvava/C++ 
-- nginx 
-- docker 
-- kubernete
-- mysql
-- redis
-- zookeeper
-- 分布式/负载均衡
+
+- go/php/java/c++ ⭐️⭐️⭐️
+- computer operating systems ⭐️⭐️⭐️
+- data struct and algorithm   ⭐️⭐️⭐️
+- computer network ⭐️⭐️⭐️
+- nginx			⭐️⭐️⭐️
+- docker        ⭐️⭐️⭐️
+- kubernete     ⭐️⭐️⭐️
+- mysql         ⭐️⭐️⭐️
+- redis         ⭐️⭐️⭐️
+- load balance ⭐️⭐️
+- kafka ⭐️⭐️
+- design pattern ⭐️⭐️
+- jvm/spring ⭐️⭐️
+
+
 
 
 
