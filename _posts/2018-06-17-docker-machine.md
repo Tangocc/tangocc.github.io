@@ -159,6 +159,116 @@ int main(void * args){
 
 ## Cgroup
 
-上面已经介绍，Docker通过Linux内核namespace实现一个相对隔离的shell环境，这一节将介绍Docker 如何通过cgroup实现资源的限制。
+上面已经介绍，Docker通过Linux内核namespace实现一个相对隔离的shell环境，但是Docker容器对于cpu或者内存等资源的使用仍然耦合，那么如何保证一个容器可使用的资源不受其他容器的影响？这一节将介绍Docker 如何通过cgroup实现资源的限制。
 
 cgroup 即是Control Group，顾明思义就是把任务放到一个组里面统一加以控制。
+
+cgroup的主要功能有：
+
+- 资源限制：对任务的资源总额进行限制。
+- 优先级分配：通过分配CPU时间片数量等操作实际上相当于控制任务运行的优先级
+- 资源统计:可以统计系统的资源使用量，进而限制资源的使用
+- 任务控制：cgroup可以对任务执行挂起、恢复等操作
+
+在介绍cgroup用法及原理前先简单介绍系统中名词:
+
+- task(任务)
+任务即表示一个进程或者线程，用pid或者tid表示
+- cgroup(控制组)
+控制组即是按照某种资源控制标准划分而成的任务组，包含一个或多个子系统。
+- subsystem(子系统)
+子系统则是一种资源的调度控制器，例如cpu子系统、内存子系统控制cgroup中内存的使用量。
+- hierarchy(层级)
+cgroup以一种树状结构排列而成，不同层级的cgroup具备父子关系，子节点继承父节点的子系统资源限制。
+
+
+**简单理解就是，控制组之间具备继承关系，每个进程可以加入到控制组中，通过不同子系统与控制组的绑定，可以实现对控制组中的进程进行cpu、mem、device等资源的限制(注意这里的限额是对整个控制组中进程使用的资源的总和的限额)。**
+
+那么在linux系统中有哪些子系统呢？(可以对哪些资源进行限额呢？)
+
+- cpu : 控制进程对CPU的使用
+- cpuacct：生成cpu资源使用情况的报告
+- cpuset:可以为cgroup中任务分配独立的cpu和内存
+- devices:可以开启或者关闭cgroup中任务对设备的访问。
+- freezer：可以挂起或者回复cgroup中的任务
+- memory:可以设定cgroup中任务对内存使用量的限额，并自动生成这些任务对内存资源的使用情况报告
+- perf_event:使用后使cgroup中的任务进行统一的性能测试
+- net_cls:通过等级标识符标记网络数据包，从而允许linux流量控制程序识别从具体cgroup中生成的数据包。
+
+cgroup以文件系统的形式进行管理，因此需要mount进行文件系统挂载才能能够使用,挂载完成后将会看到相应的子系统目录:
+
+```
+mkdir cgroup
+
+mount -t tmpfs cgroup_root ./cgroup
+
+mkdir cgroup/cpuset
+mount -t cgroup -ocpuset cpuset ./cgroup/cpuset/
+mkdir cgroup/cpu
+mount -t cgroup -ocpu cpu ./cgroup/cpu/
+mkdir cgroup/memory
+mount -t cgroup -omemory memory ./cgroup/memory/
+
+```
+
+一旦上述文件夹创建完成，其下会生成如下文件
+
+```
+ls /sys/fs/cgroup/cpu /sys/fs/cgroup/cpuset/
+/sys/fs/cgroup/cpu:
+cgroup.clone_children  cgroup.sane_behavior  cpu.shares         release_agent
+cgroup.event_control   cpu.cfs_period_us     cpu.stat           tasks
+cgroup.procs           cpu.cfs_quota_us      notify_on_release  user
+```
+通过对上述文件的操作即实现对资源的限额。
+
+
+下面以cpu限制为例演示如何使用cgroup：
+
+首先，先写一个死循环程序cpudemo.c
+
+```
+int main(){
+
+  int cnt = 0;
+ 
+  while(true){
+  
+     cnt++;
+  
+  }
+
+}
+
+```
+运行上述程序通过top命令可以看到cpu使用率接近100%
+
+```
+PID USER      PR  NI    VIRT    RES    SHR S %CPU %MEM     TIME+ COMMAND     
+3529 root      20   0    4196    736    656 R 99.6  0.1   0:23.13 cpudemo
+
+```
+
+向cpu.cfs_quota_us文件中写入cpu限额
+
+```
+cat /sys/fs/cgroup/cpu/haoel/cpu.cfs_quota_us 
+-1
+echo 20000 > /sys/fs/cgroup/cpu/haoel/cpu.cfs_quota_us
+
+```
+
+将进程ID写入task文件
+
+```
+echo 3529 >> /sys/fs/cgroup/cpu/haoel/tasks
+
+```
+
+再次使用top查看进程的cpu使用率
+
+```
+PID USER      PR  NI    VIRT    RES    SHR S %CPU %MEM     TIME+ COMMAND     
+3529 root      20   0    4196    736    656 R 19.9  0.1   8:06.11 cpudemo
+
+```
