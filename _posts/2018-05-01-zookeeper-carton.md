@@ -2,7 +2,7 @@
 layout:     post
 title:      "Zookeeper系列之漫话ZooKeeper"
 subtitle:   ""
-date:       2018-09-19 12:00:00
+date:       2018-06-19 12:00:00
 author:     "Tango"
 header-img: "img/post-bg-universe.jpg"
 catalog: true
