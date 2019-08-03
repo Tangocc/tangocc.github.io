@@ -50,4 +50,4 @@ docker支持的存储引擎有：
 
 没有万能的存储引擎，官方根据经验给予的各种存储引擎的特点
 
-![](/img/docker-storage.png)
+![](/img/in-post/docker-storage.png)

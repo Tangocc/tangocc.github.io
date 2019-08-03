@@ -157,12 +157,16 @@ hostname: Temporary failure in name resolution
 无论host模式还是bridge模式，再或者container模式其底层都是通过IPTABLE规则进行路由转发实现，
 关于iptable原理不再赘述，下面以bridge模式介绍网络实现原理。
 
-![](/img/in-post-docker-bridge.png)
+![](/img/in-post/docker-bridge.png)
 
 桥接模式结构图
 1.docker damon启动时会创建docker0虚拟网桥，并在私有网段中选取一段网段(如，172.17.0.1/16)构成一段子网,并通过veth pair链接到物理网考echo0,此时docker0网桥构成二层虚拟网络
+
 2.docker容器启动时，会在docker0子网中选取一个未使用的IP地址作为container的IP地址，并同时通过veth pair链接到 docker0子网中。
+
 3.通过设置iptable规则，通过NAT技术进行路由规则配置。
+
+
 
 下面通过容器A请求容器B的过程解释容器如何通过IPtable路由实现网络通信。
 

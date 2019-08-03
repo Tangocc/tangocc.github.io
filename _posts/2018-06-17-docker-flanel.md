@@ -1,6 +1,6 @@
 ---
 layout:     post
-title:      "Docker容器之Flanel原理"
+title:      "Docker容器之Flannel原理"
 subtitle:   ""
 date:       2018-03-20 12:00:00
 author:     "Tango"
