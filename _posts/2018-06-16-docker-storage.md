@@ -1,16 +1,3 @@
----
-layout:     post
-title:      "Docker容器之存储引擎"
-subtitle:   ""
-date:       2018-06-20 12:00:00
-author:     "Tango"
-header-img: "img/post-bg-universe.jpg"
-catalog: true
-tags:   
-    - Docker
-    - 容器
-    - 存储引擎
----
 
 
 #Docker镜像存储结构

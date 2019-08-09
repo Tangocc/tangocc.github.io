@@ -24,7 +24,6 @@ mysql系统来说，存储引擎是真正实现数据的存储与读取操作的
 ### 存储引擎架构
 ![](/img/in-post/mysql/post-innodb-memeory-disk.jpeg)
 ![](/img/in-post/mysql/post-innodb-engine-struct.jpeg)
-图片转自 [](https://blog.csdn.net/nayanminxing/article/details/51151455)
 
 ### 物理组织结构
 innodb存储引擎物理组织形式可以理解为其在磁盘的存储形式，表现为各种文件，其分类大概为  
