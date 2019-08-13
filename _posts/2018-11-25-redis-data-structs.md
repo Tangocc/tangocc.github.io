@@ -310,7 +310,69 @@ typedef struct intset{
 
 ---
 
-**本文以上主要介绍Redis中常用的5中底层数据结构，其作为五大对象Object的底层实现基本数据结构,理解其原理很容易理解Object实现原理以及常用命令的实现原理。接下来文章将介绍五大对象`string`、`set`、`sortedset`、`hash`、`list`的实现原理。**  
+
+## 6.跳跃表
+
+在介绍跳跃表之前，先考虑一个问题？**如何维护一个有序的链表？**
+
+常规的方式就是在插入一个元素时，从头遍历链表进行大小比较，选择合适的位置进行插入，其时间复杂度是O(n),那么怎么借助于链表的有序性减少比较的次数？链表的内存非连续性二分法是无法实现的，但可不可以借助于二分法思想进行关键点比较过滤掉一些无效的数值比较?这就是跳跃表的核心思想。其原理如下
+
+![](/img/in-post/redis/redis-skip-list.png)  
+
+
+跳跃表分为多个层，每个层之间是一个有序链表，上层元素有一个指针指向下层元素，查找和插入操作自上而下遍历，同一层自左向右遍历。
+
+对于一个有序链表1->3->5->7->9->11,按照上面的想法，我们是否可以借助索引的思想，将链表中一些关键的节点提取出来(此处我们提取出1、5、9)作为一个有序链表，当我们插入元素8时，只需要比较节点5、9之间的元素就可以确定元素8的插入位置，从而省略1-5和9-∞的元素的比较。
+
+更近一步，我们是不是可以将链表1->5->9继续提出关键节点作为更上一层，从而进一步缩减比较次数。(理论上最上一次只有2个节点)
+
+对上上述链表，其效果不是很明显，如果对于10w甚至更长的链表其比较次数将大大降低。
+
+但是同时从上述结构可以看出，跳跃链表是用空间获取时间。
+
+
+redis中跳跃表结构如下
+
+```
+/* ZSETs use a specialized version of Skiplists */
+typedef struct zskiplistNode {
+	// member 对象
+    robj *obj;
+	// 分值
+    double score;
+	// 后退指针
+    struct zskiplistNode *backward;
+	// 层
+    struct zskiplistLevel {
+		// 前进指针
+        struct zskiplistNode *forward;
+		// 节点在该层和前向节点的距离
+        unsigned int span;
+    } level[];
+} zskiplistNode;
+ 
+typedef struct zskiplist {
+	// 头节点，尾节点
+    struct zskiplistNode *header, *tail;
+	// 节点数量
+    unsigned long length;
+	// 目前表内节点的最大层数
+    int level;
+} zskiplist;
+
+```
+
+
+
+### 总结
+
+- 跳跃表是有序集合底层实现之一
+- 跳跃表中买多个节点可以包含相同的分值，但是每个节点的成员对象必须是唯一的
+
+
+
+
+**本文以上主要介绍Redis中常用的5中底层数据结构，其作为五大对象Object的底层实现基本数据结构,理解其原理很容易理解Object实现原理以及常用命令的实现原理。接下来文章将介绍五大对象`string`、`set`、`sortedset`、`hash`、`list`、`skiplist`的实现原理。**  
 
 
 > **参考文献**《Redis设计与实现(第二版)》
