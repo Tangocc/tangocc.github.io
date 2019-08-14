@@ -11,7 +11,7 @@ Hey，我是Tango，生活单调、热爱民谣。
 ## **联系我**
 
 - **微信:**　　　　　　_707690893_  
-- **邮箱:**　　　　　　_neuqtanglu@163.com_
+- **邮箱:**　　　　　　_iamtango@foxmail.com_
 - **CSDN:**　　　　　[CSDN博客](http://blog.csdn.net/u013291818/)
 
 ---
