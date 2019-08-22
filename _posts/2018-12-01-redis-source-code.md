@@ -4,7 +4,7 @@ title:      "REDIS系列之源码分析"
 subtitle:   ""
 date:       2018-12-01 12:00:00
 author:     "Tango"
-header-img: "img/in-post/post-2017-10-11/post-bg-universe.jpg"
+header-img: "img/post-bg-universe.jpg"
 catalog: true
 tags:   
     - REDIS
@@ -13,12 +13,11 @@ tags:
 ---  
 
 
+# 核心数据结构
 
-## 核心数据结构
+`redis`用`redisServer`和`redisClient`结构体封装客户端和服务端的数据信息。在分析源码前先介绍一下其数据结构中包含哪些信息。
 
-redis用redisServer和redisClient结构体封装redis客户端和服务端的数据信息。在分析源码前先介绍一下其数据结构中包含哪些信息。
-
-### redisServer
+## redisServer
 
 ```
 
@@ -301,11 +300,11 @@ typedef struct redisClient {
 } redisClient;
 ```
 
-## 源码分析
+# 源码分析
 
 
 
-### main
+## main
 
 ```
 
@@ -339,7 +338,7 @@ int main(int argc, char **argv) {
 
 在主函数中，其结构比较清晰，首先定义一个redisServer结构，判断是单机模式还是主从模式，并根据相应的模式初始化redisServer结构体的默认配置，然后从命令行和配置文件中获取用户配置信息，并修改redisServer结构的信息，接着进入事件处理主函数。
 
-### initServerConfig
+## initServerConfig
 
 ```
 void initServerConfig(void) {
@@ -503,7 +502,7 @@ initServerConfig主要完成redisServer**默认配置**的初始化工作，包�
 - 创建命令表
 
 
-### initServer
+## initServer
 
 ```
 
@@ -614,7 +613,7 @@ initServer函数则实现redisServer的配置，包括用户命令行或者配�
 - 创建共享对象，这些对象包含redis服务器经常用到的一些值，包括“OK”回复字符串等
 
 
-### aeMain
+## aeMain
 
 
 ```
@@ -647,7 +646,7 @@ void aeMain(aeEventLoop *eventLoop) {
 
 
 
-### aeProcessEvents
+## aeProcessEvents
 
 ```
 int aeProcessEvents(aeEventLoop *eventLoop, int flags)
@@ -707,9 +706,9 @@ int aeProcessEvents(aeEventLoop *eventLoop, int flags)
 
 
 
-## 总结
+# 总结
 
-### 同步机制
+## 同步机制
 
 - Redis服务器的所有数据库都保存在redisServer.db数组中，而数据库的数量则由redisServer.dbnum属性保存
 - 客户端通过修改目标数据库指针，让它指向redisServer.db数组中的不同元素来切换不同的数据库
@@ -726,7 +725,7 @@ int aeProcessEvents(aeEventLoop *eventLoop, int flags)
 - AOF重写可以产生一个新的AOF文件，这个新的AOF文件和原有的AOF文件所保存的数据库状态一样，但是体积更小。执行BGREWRITEAOF命令时，Redis服务器会维护一个AOF重写缓冲区，该缓冲区会在子进程创建AOF文件期间，记录服务器执行的所有写命令。当子进程创建新的AOF文件工作之后，服务器会将重写缓冲区中所有内容追加到新AOF文件的末尾，使得新旧两个AOF文件所保存的数据库状态一致，最后服务器用新的AOF文件替换旧的AOF文件，以此来完成AOF文件重写操作。
 
 
-### 高可用哨兵模式
+## 高可用哨兵模式
 
 - Sentinel知识一个运行在特殊模式下的redis服务器，它使用和普通模式不同的命令表，所以sentinel模式能够使用的耳鸣了和普通Redis服务器能够使用的命令不同
 - sentinel会腐乳用户指定的配置文件，为每个要被简史的主服务器创建相应的实例结构，并创建连向主服务器的命令连接和订阅连接
@@ -736,7 +735,7 @@ int aeProcessEvents(aeEventLoop *eventLoop, int flags)
 - 当sentinel手机到足够多的主观下线投票之后，它会将主服务器判断为客观下线，并发起一次针对主服务器的故障转移操作
 
 
-### 集群部署
+## 集群部署
 
 Redis是集群是Redis提供分布式数据库方案，集群通过分片来进行数据共享，并提供复制和故障转移功能。
 
@@ -755,7 +754,7 @@ Redis是集群是Redis提供分布式数据库方案，集群通过分片来进�
 - 集群中的节点通过发送和接收消息来进行通信，常见的消息包括MEET、PING、PONG、PUBLISH、FAIL
 
 
-### 发布订阅模式
+## 发布订阅模式
 
 - 服务器状态在pubsub_channels链表中保存了所有频道的订阅关系，SUBSCRIBE命令负责将客户端和被订阅的频道关联到这个字典里面，而UNSUBSCRIBE命令则负责移除客户端和被退订频道之间的关系。
 - 服务器状态在pubsub_patterns链表中保存了所有模式的订阅关系，PUBSUBSCRIBE命令负责将客户端和被订阅的模式进入到这个列表中，而PUNSUBSCRIBE命令则负责移除客户端和被退订模式在列表中的记录。
@@ -763,7 +762,7 @@ Redis是集群是Redis提供分布式数据库方案，集群通过分片来进�
 - PUBSUB命令的三个子命令都是通过读取pubsub_channels字典和pubsub_patterns链表中的信息来实现的。
 
 
-### 事务
+## 事务
 
 - 事务提供了一种将多个命令打包，然后一次性有序地执行的机制
 - 多个命令会被入队到事务队列中，然后按先进先出的顺序执行
