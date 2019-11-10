@@ -11,7 +11,7 @@ tags:
 
 ## 基本信息
 
-- Tango/男/1992
+- Tango/男/
 - 邮箱： tangocccc@gmail.com
 - 手机： 13717503610
 - QQ/微信：   707690893
