@@ -12,8 +12,8 @@ tags:
 ## 基本信息
 
 - Tango/男/
-- 邮箱： tangocccc@gmail.com
+- 邮箱： iamtango@foxmail.com
 - 手机： 13717503610
-- QQ/微信：   707690893
+- QQ/微信：707690893
 - 博客：http://blog.csdn.net/u013291818/ 
 - Github: https://tangocc.github.io/
