@@ -1,6 +1,6 @@
 ---
 layout:     post
-title:      "面试之HTTP"
+title:      "面试之计算机网络"
 subtitle:   ""
 date:       2017-10-20 12:00:00
 author:     "Tango"
@@ -308,3 +308,69 @@ Expires实体报头域给出响应过期的日期和时间。为了让代理服�
 eg：Expires：Thu，15 Sep 2006 16:23:12 GMT
 
 HTTP1.1的客户端和缓存必须将其他非法的日期格式（包括0）看作已经过期。eg：为了让浏览器不要缓存页面，我们也可以利用Expires实体报头域，设置为0，jsp中程序如下：response.setDateHeader("Expires","0");
+
+
+## TCP报文格式
+![报文格式](https://img-blog.csdnimg.cn/20200708175533384.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3UwMTMyOTE4MTg=,size_16,color_FFFFFF,t_70)
+- 报文长度
+    - 20Byte
+    
+- 标志位含义
+  - SYN:
+  - ACK:ACKAGELEDGE，确认报文。
+  - FIN: FINISH，结束请求。
+  - RST：RESET，即复位标志位。
+    -  **什么情况下会收到这个报文？**
+    >1.向不存在的端口发起请求。
+     2.接收方关闭了连接，处于半关闭状态。此时发送方继续发送数据，则接收方会返回RST复位报文。
+     3.异常终止连接。一方直接发送RST报文，表示异常终止连接。一旦发送方发送复位报文段，发送端所有排队等待发送的数据都被丢弃。应用程序可以通过socket选项                 
+
+  - PSH:   PUSH，推，也即急迫比特位。
+  - 在发送方和接收方交互过程中，有时候针对某个报文，希望接收方接收到数据后，能够快速得到应用层的处理。发送方在发送数据的时候可以设置这个标志位。接收TCP收到推送比特置1的报文段,就会尽快地(即"推送向前")交付给接收应用进程,而不再等到整个缓冲都填满了再向上交互。
+  - URG:URGENT，紧急指针比特位。
+  - 在发送方和接收方交互过程中，发送方希望数据能够得到快速发送，而无需等待发送缓冲区满，其可以通过设置URG=1告诉协议栈，此报文中包含紧急数据，需要快速发送给接收方(如，已经发送了很长的一个程序要在远地的主机上运行。但后来发现了一些问题，需要取消该程序的运行。因此用户从键盘发出中断命令（Ctrl+C)。如果不使用紧急指针数据，那么这两个字符将存储在接收TCP的缓存末尾。只有在所有的数据被处理完毕后这两个字符才被交付接收方的应用程序。这样做就浪费了很多时间。
+ 
+ - **注**：URG和PSH区别：
+    > URG告诉发送方的协议栈这是紧急的数据，赶紧发送出去。
+    > PSH告诉接收方这是紧急的数据，赶紧交给应用层处理。
+
+
+## IP报文格式
+![在这里插入图片描述](https://img-blog.csdnimg.cn/20200709192636127.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3UwMTMyOTE4MTg=,size_16,color_FFFFFF,t_70)
+ - 报文长度
+   20Byte
+ - 字段含义
+   -  Version：版本
+   4：表示为IPV4；6：表示为IPV6
+   - Total Length：总长度
+   总长度，整个IP数据报的长度，包括首部和数据之和，单位为字节，最长65535，总长度必须不超过最大传输单元MTU
+   - Identification：标识
+   主机每发一个报文，加1，分片重组时会用到该字段。
+   - Fragment Offset：片偏移
+   分片重组时会用到该字段。表示较长的分组在分片后，某片在原分组中的相对位置。以8个字节为偏移单位。
+   - Time to Live：生存时间
+   可经过的最多路由数，即数据包在网络中可通过的路由器数的最大值。
+   - Protocol: 下一层协议。指出此数据包携带的数据使用何种协议，以便目的主机的IP层将数据部分上交给哪个进程处理。
+常见值：
+0: 保留Reserved
+1: ICMP, Internet Control Message [RFC792]
+2: IGMP, Internet Group Management [RFC1112]
+3: GGP, Gateway-to-Gateway [RFC823]
+4: IP in IP (encapsulation) [RFC2003]
+6: TCP Transmission Control Protocol [RFC793]
+17: UDP User Datagram Protocol [RFC768]
+
+- Source Address:源IP地址
+- Destination Address:目的IP地址。
+
+## TCP拥塞控制算法
+
+拥塞控制的过程分为四个阶段：慢启动、拥塞避免、快重传和快恢复，是现有的众多拥塞控制算法的基础，下面详细说明这几个阶段。
+
+慢启动阶段，在没有出现丢包时每收到一个 ACK 就将拥塞窗口大小加一（单位是 MSS，最大单个报文段长度），每轮次发送窗口增加一倍，呈指数增长，若出现丢包，则将拥塞窗口减半，进入拥塞避免阶段；当窗口达到慢启动阈值或出现丢包时，进入拥塞避免阶段，窗口每轮次加一，呈线性增长；当收到对一个报文的三个重复的 ACK 时，认为这个报文的下一个报文丢失了，进入快重传阶段，立即重传丢失的报文，而不是等待超时重传；快重传完成后进入快恢复阶段，将慢启动阈值修改为当前拥塞窗口值的一半，同时拥塞窗口值等于慢启动阈值，然后进入拥塞避免阶段，重复上诉过程。
+![在这里插入图片描述](https://img-blog.csdnimg.cn/20200709205831625.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3UwMTMyOTE4MTg=,size_16,color_FFFFFF,t_70)
+
+### HTTPS原理
+
+![在这里插入图片描述](https://img-blog.csdnimg.cn/20200710183504148.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3UwMTMyOTE4MTg=,size_16,color_FFFFFF,t_70)
+

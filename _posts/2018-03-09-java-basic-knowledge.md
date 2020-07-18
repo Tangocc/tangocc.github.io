@@ -1,6 +1,6 @@
 ---
 layout:     post
-title:      "Java经典面试题"
+title:      "面试之Java"
 subtitle:   ""
 date:       2017-12-16 12:00:00
 author:     "Tango"

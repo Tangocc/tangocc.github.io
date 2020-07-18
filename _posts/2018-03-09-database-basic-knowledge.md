@@ -1,6 +1,6 @@
 ---
 layout:     post
-title:      "数据库经典面试题"
+title:      "面试之数据库经典面试题"
 subtitle:   ""
 date:       2017-12-16 12:00:00
 author:     "Tango"
@@ -8,6 +8,7 @@ header-img: "img/post-bg-universe.jpg"
 catalog: true
 tags:   
     - 面试
+    - 数据库
 ---
 
 ###  1.数据库完整性约束
@@ -227,4 +228,9 @@ truncate table 在功能上与不带 WHERE 子句的 DELETE 语句相同：二�
 * 关于读写分离
 
 在完成主从复制时，由于slave是需要同步master的。所以对于insert/delete/update这些更新数据库的操作，应该在master中完成。而select的查询操作，则落下到slave中。
+```
+
+### MVCC
+```
+https://blog.csdn.net/SnailMann/article/details/94724197
 ```
