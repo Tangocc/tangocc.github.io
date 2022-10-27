@@ -1,4 +1,18 @@
 
+---
+layout:     post
+title:      "从操作系统漫谈GOLang GPM模型"
+subtitle:   ""
+date:       2022-10-10 12:00:00
+author:     "Tango"
+header-img: "img/post-bg-universe.jpg"
+catalog: true
+tags:   
+    - golang
+    - 面试
+    
+---
+
 # 前言
 
 本文从操作系统谈起，简单介绍操作系统基本知识，引出进程、线程调度的基本原理和基本模型，然后从0到1设计Golang调度器，通过方案的逐步演进升级，可以了解到GPM模型设计理念。
