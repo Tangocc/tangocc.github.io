@@ -11,13 +11,11 @@ CREATE TABLE `locks` (
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COMMENT='锁测试表';
 
 
-
 insert into locks values (1,1,"Tom",1,0);
 insert into locks values (5,5,"Tom",1,0);
 insert into locks values (10,10,"Tom",1,0);
 insert into locks values (15,15,"Tom",1,0);
 insert into locks values (20,20,"Tom",1,0);
-
 
 
 select @@tx_isolation;
