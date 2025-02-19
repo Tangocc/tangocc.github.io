@@ -1,15 +1,14 @@
 ---
 layout:     post
-title:      "面试之Java"
+title:      "基础知识之Java"
 subtitle:   ""
 date:       2017-12-16 12:00:00
 author:     "Tango"
 header-img: "img/post-bg-universe.jpg"
 catalog: true
 tags:   
-    - 面试
     - java
-    - 总结
+    - 基础知识
 ---  
 
 ### 1.HashMap和HashTable区别

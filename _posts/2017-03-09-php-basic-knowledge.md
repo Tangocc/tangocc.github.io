@@ -1,13 +1,13 @@
 ---
 layout:     post
-title:      "面试之PHP"
+title:      "基础知识之PHP"
 subtitle:   ""
 date:       2017-12-16 12:00:00
 author:     "Tango"
 header-img: "img/post-bg-universe.jpg"
 catalog: true
 tags:   
-    - 面试
+    - 基础知识
     - php
 ---  
 
