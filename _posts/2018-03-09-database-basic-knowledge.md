@@ -234,3 +234,8 @@ truncate table 在功能上与不带 WHERE 子句的 DELETE 语句相同：二�
 ```
 https://blog.csdn.net/SnailMann/article/details/94724197
 ```
+
+### redo/undo/binlog
+```
+https://xiaolincoding.com/mysql/log/how_update.html
+```
